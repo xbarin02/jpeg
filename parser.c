@@ -323,6 +323,39 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	return 0;
 }
 
+int parse_scan_header(FILE *stream)
+{
+	/* Number of image components in scan */
+	uint8_t Ns = read_byte(stream);
+
+	printf("Ns = %" PRIu8 "\n", Ns);
+
+	for (int j = 0; j < Ns; ++j) {
+		uint8_t Cs;
+		uint8_t Td, Ta;
+
+		Cs = read_byte(stream);
+		read_nibbles(stream, &Td, &Ta);
+
+		printf("Cs%i = %" PRIu8 " Td%i = %" PRIu8 " Ta%i = %" PRIu8 "\n", j, Cs, j, Td, j, Ta);
+	}
+
+	uint8_t Ss;
+	uint8_t Se;
+	uint8_t Ah, Al;
+
+	Ss = read_byte(stream);
+	Se = read_byte(stream);
+	read_nibbles(stream, &Ah, &Al);
+
+	assert(Ss == 0);
+	assert(Se == 63);
+	assert(Ah == 0);
+	assert(Al == 0);
+
+	return 0;
+}
+
 int parse(FILE *stream, struct context *context)
 {
 	while (1) {
@@ -365,6 +398,12 @@ int parse(FILE *stream, struct context *context)
 				/* parse multiple tables in single DHT */
 				if (ftell(stream) < pos + len)
 					goto parse_htable;
+				break;
+			/* SOS Start of scan */
+			case 0xffda:
+				printf("SOS\n");
+				len = read_length(stream);
+				parse_scan_header(stream);
 				break;
 			default:
 				printf("unhandled marker 0x%" PRIx16 "\n", marker);
