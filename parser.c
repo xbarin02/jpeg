@@ -48,14 +48,15 @@ uint16_t read_length(FILE *stream)
  * All markers are assigned two-byte codes */
 uint16_t read_marker(FILE *stream)
 {
+	uint8_t byte;
+
 	/* Any marker may optionally be preceded by any
 	 * number of fill bytes, which are bytes assigned code X’FF’. */
-
-	uint8_t byte = read_byte(stream);
+seek:
+	byte = read_byte(stream);
 
 	if (byte != 0xff) {
-		printf("unexpected byte value\n");
-		abort();
+		goto seek;
 	}
 
 repeat:
@@ -64,6 +65,9 @@ repeat:
 	switch (byte) {
 		case 0xff:
 			goto repeat;
+		/* not a marker */
+		case 0x00:
+			goto seek;
 		default:
 			return UINT16_C(0xff00) | byte;
 	}
@@ -404,6 +408,10 @@ int parse(FILE *stream, struct context *context)
 				printf("SOS\n");
 				len = read_length(stream);
 				parse_scan_header(stream);
+				break;
+			/* EOI* End of image */
+			case 0xffd9:
+				printf("EOI\n");
 				break;
 			default:
 				printf("unhandled marker 0x%" PRIx16 "\n", marker);
