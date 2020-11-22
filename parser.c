@@ -70,13 +70,11 @@ int read_word(FILE *stream, uint16_t *word)
 	return RET_SUCCESS;
 }
 
-uint16_t read_length(FILE *stream)
+int read_length(FILE *stream, uint16_t *len)
 {
-	uint16_t len;
+	read_word(stream, len);
 
-	read_word(stream, &len);
-
-	return len;
+	return RET_SUCCESS;
 }
 
 /* B.1.1.2 Markers
@@ -425,21 +423,21 @@ int parse_format(FILE *stream, struct context *context)
 			/* APP0 */
 			case 0xffe0:
 				printf("APP0\n");
-				len = read_length(stream);
+				read_length(stream, &len);
 				err = skip_segment(stream, len);
 				RETURN_IF(err);
 				break;
 			/* DQT Define quantization table(s) */
 			case 0xffdb:
 				printf("DQT\n");
-				len = read_length(stream);
+				read_length(stream, &len);
 				err = parse_qtable(stream, context);
 				RETURN_IF(err);
 				break;
 			/* SOF0 Baseline DCT */
 			case 0xffc0:
 				printf("SOF0\n");
-				len = read_length(stream);
+				read_length(stream, &len);
 				err = parse_frame_header(stream, context);
 				RETURN_IF(err);
 				break;
@@ -447,7 +445,7 @@ int parse_format(FILE *stream, struct context *context)
 			case 0xffc4:
 				printf("DHT\n");
 				pos = ftell(stream);
-				len = read_length(stream);
+				read_length(stream, &len);
 				/* parse multiple tables in single DHT */
 				do {
 					err = parse_huffman_tables(stream, context);
@@ -457,7 +455,7 @@ int parse_format(FILE *stream, struct context *context)
 			/* SOS Start of scan */
 			case 0xffda:
 				printf("SOS\n");
-				len = read_length(stream);
+				read_length(stream, &len);
 				err = parse_scan_header(stream);
 				RETURN_IF(err);
 				break;
