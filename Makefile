@@ -17,3 +17,5 @@ clean:
 .PHONY: distclean
 distclean: clean
 	$(RM) -- *.gcda
+
+parser: parser.o io.o

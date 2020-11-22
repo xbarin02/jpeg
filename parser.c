@@ -3,120 +3,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include <arpa/inet.h>
 #include <assert.h>
 
-/**
- * \brief Error codes
- *
- * The standard (C89, 6.1.3.3 Enumeration constants) states that
- * an identifier declared as an enumeration constant has type \c int.
- * Therefore, it is fine if the function returning these constants
- * has return type \c int.
- */
-enum {
-	/* 0x0000 successful completion */
-	RET_SUCCESS                   = 0x0000, /**< success */
-	/* 0x1xxx input/output errors */
-	RET_FAILURE_FILE_IO           = 0x1000, /**< I/O error */
-	RET_FAILURE_FILE_UNSUPPORTED  = 0x1001, /**< unsupported feature or file type */
-	RET_FAILURE_FILE_OPEN         = 0x1002, /**< file open failure */
-	RET_FAILURE_FILE_SEEK         = 0x1003,
-	/* 0x2xxx memory errors */
-	RET_FAILURE_MEMORY_ALLOCATION = 0x2000, /**< unable to allocate dynamic memory */
-	/* 0x3xxx general exceptions */
-	RET_FAILURE_LOGIC_ERROR       = 0x3000, /**< faulty logic within the program */
-	RET_FAILURE_OVERFLOW_ERROR    = 0x3001, /**< result is too large for the destination type */
-	/* 0x4xxx other */
-	RET_FAILURE_NO_MORE_DATA      = 0x4000,
-	RET_LAST
-};
-
-#define RETURN_IF(err) \
-	do { \
-		if (err) { \
-			return (err); \
-		} \
-	} while (0)
-
-int skip_segment(FILE *stream, uint16_t len)
-{
-	if (fseek(stream, (long)len - 2, SEEK_CUR) != 0) {
-		return RET_FAILURE_FILE_SEEK;
-	}
-
-	return RET_SUCCESS;
-}
-
-int read_byte(FILE *stream, uint8_t *byte)
-{
-	if (fread(byte, sizeof(uint8_t), 1, stream) != 1) {
-		return RET_FAILURE_FILE_IO;
-	}
-
-	return RET_SUCCESS;
-}
-
-int read_word(FILE *stream, uint16_t *word)
-{
-	if (fread(word, sizeof(uint16_t), 1, stream) != 1) {
-		return RET_FAILURE_FILE_IO;
-	}
-
-	assert(word != NULL);
-
-	*word = ntohs(*word);
-
-	return RET_SUCCESS;
-}
-
-int read_length(FILE *stream, uint16_t *len)
-{
-	int err;
-
-	err = read_word(stream, len);
-	RETURN_IF(err);
-
-	return RET_SUCCESS;
-}
-
-/* B.1.1.2 Markers
- * All markers are assigned two-byte codes */
-int read_marker(FILE *stream, uint16_t *marker)
-{
-	int err;
-	uint8_t byte;
-
-	/* Any marker may optionally be preceded by any
-	 * number of fill bytes, which are bytes assigned code X’FF’. */
-
-	long start = ftell(stream), end;
-
-	seek: do {
-		err = read_byte(stream, &byte);
-		RETURN_IF(err);
-	} while (byte != 0xff);
-
-	do {
-		err = read_byte(stream, &byte);
-		RETURN_IF(err);
-
-		switch (byte) {
-			case 0xff:
-				continue;
-			/* not a marker */
-			case 0x00:
-				goto seek;
-			default:
-				end = ftell(stream);
-				if (end - start != 2) {
-					printf("*** %li bytes skipped ***\n", end - start - 2);
-				}
-				*marker = UINT16_C(0xff00) | byte;
-				return RET_SUCCESS;
-		}
-	} while (1);
-}
+#include "common.h"
+#include "io.h"
 
 struct qtable {
 	/* Value 0 indicates 8-bit Qk values; value 1 indicates 16-bit Qk values. */
@@ -228,24 +118,6 @@ int init_context(struct context *context)
 	for (int i = 0; i < 4; ++i) {
 		init_htable(&context->htable[i]);
 	}
-
-	return RET_SUCCESS;
-}
-
-int read_nibbles(FILE *stream, uint8_t *first, uint8_t *second)
-{
-	int err;
-	uint8_t byte;
-
-	assert(first != NULL);
-	assert(second != NULL);
-
-	err = read_byte(stream, &byte);
-	RETURN_IF(err);
-
-	/* The first 4-bit parameter of the pair shall occupy the most significant 4 bits of the byte.  */
-	*first = (byte >> 4) & 15;
-	*second = (byte >> 0) & 15;
 
 	return RET_SUCCESS;
 }
