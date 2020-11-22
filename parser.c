@@ -79,7 +79,7 @@ int read_length(FILE *stream, uint16_t *len)
 
 /* B.1.1.2 Markers
  * All markers are assigned two-byte codes */
-uint16_t read_marker(FILE *stream)
+int read_marker(FILE *stream, uint16_t *marker)
 {
 	uint8_t byte;
 
@@ -106,7 +106,8 @@ uint16_t read_marker(FILE *stream)
 				if (end - start != 2) {
 					printf("*** %li bytes skipped ***\n", end - start - 2);
 				}
-				return UINT16_C(0xff00) | byte;
+				*marker = UINT16_C(0xff00) | byte;
+				return RET_SUCCESS;
 		}
 	} while (1);
 }
@@ -409,7 +410,9 @@ int parse_format(FILE *stream, struct context *context)
 	int err;
 
 	while (1) {
-		uint16_t marker = read_marker(stream);
+		uint16_t marker;
+
+		read_marker(stream, &marker);
 
 		/* An asterisk (*) indicates a marker which stands alone,
 		 * that is, which is not the start of a marker segment. */
