@@ -51,7 +51,7 @@ int skip_segment(FILE *stream, uint16_t len)
 int read_byte(FILE *stream, uint8_t *byte)
 {
 	if (fread(byte, sizeof(uint8_t), 1, stream) != 1) {
-		abort();
+		return RET_FAILURE_FILE_IO;
 	}
 
 	return RET_SUCCESS;
@@ -60,7 +60,7 @@ int read_byte(FILE *stream, uint8_t *byte)
 int read_word(FILE *stream, uint16_t *word)
 {
 	if (fread(word, sizeof(uint16_t), 1, stream) != 1) {
-		abort();
+		return RET_FAILURE_FILE_IO;
 	}
 
 	assert(word != NULL);
@@ -502,7 +502,7 @@ int parse_format(FILE *stream, struct context *context)
 			/* EOI* End of image */
 			case 0xffd9:
 				printf("EOI\n");
-				break;
+				return RET_SUCCESS;
 			default:
 				fprintf(stderr, "unhandled marker 0x%" PRIx16 "\n", marker);
 				return RET_FAILURE_FILE_UNSUPPORTED;
