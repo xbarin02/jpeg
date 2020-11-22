@@ -57,22 +57,26 @@ int read_byte(FILE *stream, uint8_t *byte)
 	return RET_SUCCESS;
 }
 
-uint16_t read_word(FILE *stream)
+int read_word(FILE *stream, uint16_t *word)
 {
-	uint16_t word;
-
-	if (fread(&word, sizeof(uint16_t), 1, stream) != 1) {
+	if (fread(word, sizeof(uint16_t), 1, stream) != 1) {
 		abort();
 	}
 
-	word = ntohs(word);
+	assert(word != NULL);
 
-	return word;
+	*word = ntohs(*word);
+
+	return RET_SUCCESS;
 }
 
 uint16_t read_length(FILE *stream)
 {
-	return read_word(stream);
+	uint16_t len;
+
+	read_word(stream, &len);
+
+	return len;
 }
 
 /* B.1.1.2 Markers
@@ -276,7 +280,9 @@ int parse_qtable(FILE *stream, struct context *context)
 			read_byte(stream, &byte);
 			qtable->element[zigzag[i]] = (uint16_t)byte;
 		} else {
-			qtable->element[zigzag[i]] = read_word(stream);
+			uint16_t word;
+			read_word(stream, &word);
+			qtable->element[zigzag[i]] = word;
 		}
 	}
 
@@ -302,8 +308,8 @@ int parse_frame_header(FILE *stream, struct context *context)
 	assert(context != NULL);
 
 	read_byte(stream, &P);
-	Y = read_word(stream);
-	X = read_word(stream);
+	read_word(stream, &Y);
+	read_word(stream, &X);
 	read_byte(stream, &Nf);
 
 	assert(P == 8);
