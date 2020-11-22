@@ -72,7 +72,10 @@ int read_word(FILE *stream, uint16_t *word)
 
 int read_length(FILE *stream, uint16_t *len)
 {
-	read_word(stream, len);
+	int err;
+
+	err = read_word(stream, len);
+	RETURN_IF(err);
 
 	return RET_SUCCESS;
 }
@@ -81,6 +84,7 @@ int read_length(FILE *stream, uint16_t *len)
  * All markers are assigned two-byte codes */
 int read_marker(FILE *stream, uint16_t *marker)
 {
+	int err;
 	uint8_t byte;
 
 	/* Any marker may optionally be preceded by any
@@ -89,11 +93,13 @@ int read_marker(FILE *stream, uint16_t *marker)
 	long start = ftell(stream), end;
 
 	seek: do {
-		read_byte(stream, &byte);
+		err = read_byte(stream, &byte);
+		RETURN_IF(err);
 	} while (byte != 0xff);
 
 	do {
-		read_byte(stream, &byte);
+		err = read_byte(stream, &byte);
+		RETURN_IF(err);
 
 		switch (byte) {
 			case 0xff:
@@ -228,12 +234,14 @@ int init_context(struct context *context)
 
 int read_nibbles(FILE *stream, uint8_t *first, uint8_t *second)
 {
+	int err;
 	uint8_t byte;
 
 	assert(first != NULL);
 	assert(second != NULL);
 
-	read_byte(stream, &byte);
+	err = read_byte(stream, &byte);
+	RETURN_IF(err);
 
 	/* The first 4-bit parameter of the pair shall occupy the most significant 4 bits of the byte.  */
 	*first = (byte >> 4) & 15;
@@ -257,12 +265,14 @@ const uint8_t zigzag[64] = {
 /* B.2.4.1 Quantization table-specification syntax */
 int parse_qtable(FILE *stream, struct context *context)
 {
+	int err;
 	uint8_t Pq, Tq;
 	struct qtable *qtable;
 
 	assert(context != NULL);
 
-	read_nibbles(stream, &Pq, &Tq);
+	err = read_nibbles(stream, &Pq, &Tq);
+	RETURN_IF(err);
 
 	printf("Pq = %" PRIu8 " Tq = %" PRIu8 "\n", Pq, Tq);
 
@@ -276,11 +286,13 @@ int parse_qtable(FILE *stream, struct context *context)
 	for (int i = 0; i < 64; ++i) {
 		if (Pq == 0) {
 			uint8_t byte;
-			read_byte(stream, &byte);
+			err = read_byte(stream, &byte);
+			RETURN_IF(err);
 			qtable->element[zigzag[i]] = (uint16_t)byte;
 		} else {
 			uint16_t word;
-			read_word(stream, &word);
+			err = read_word(stream, &word);
+			RETURN_IF(err);
 			qtable->element[zigzag[i]] = word;
 		}
 	}
@@ -297,6 +309,7 @@ int parse_qtable(FILE *stream, struct context *context)
 
 int parse_frame_header(FILE *stream, struct context *context)
 {
+	int err;
 	/* Sample precision */
 	uint8_t P;
 	/* Number of lines, Number of samples per line */
@@ -306,10 +319,14 @@ int parse_frame_header(FILE *stream, struct context *context)
 
 	assert(context != NULL);
 
-	read_byte(stream, &P);
-	read_word(stream, &Y);
-	read_word(stream, &X);
-	read_byte(stream, &Nf);
+	err = read_byte(stream, &P);
+	RETURN_IF(err);
+	err = read_word(stream, &Y);
+	RETURN_IF(err);
+	err = read_word(stream, &X);
+	RETURN_IF(err);
+	err = read_byte(stream, &Nf);
+	RETURN_IF(err);
 
 	assert(P == 8);
 	assert(X > 0);
@@ -327,9 +344,12 @@ int parse_frame_header(FILE *stream, struct context *context)
 		uint8_t H, V;
 		uint8_t Tq;
 
-		read_byte(stream, &C);
-		read_nibbles(stream, &H, &V);
-		read_byte(stream, &Tq);
+		err = read_byte(stream, &C);
+		RETURN_IF(err);
+		err = read_nibbles(stream, &H, &V);
+		RETURN_IF(err);
+		err = read_byte(stream, &Tq);
+		RETURN_IF(err);
 
 		printf("C = %" PRIu8 " H = %" PRIu8 " V = %" PRIu8 " Tq = %" PRIu8 "\n", C, H, V, Tq);
 
@@ -343,11 +363,13 @@ int parse_frame_header(FILE *stream, struct context *context)
 
 int parse_huffman_tables(FILE *stream, struct context *context)
 {
+	int err;
 	uint8_t Tc, Th;
 
 	assert(context != NULL);
 
-	read_nibbles(stream, &Tc, &Th);
+	err = read_nibbles(stream, &Tc, &Th);
+	RETURN_IF(err);
 
 	printf("Tc = %" PRIu8 " Th = %" PRIu8 "\n", Tc, Th);
 
@@ -356,14 +378,16 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	htable->Tc = Tc;
 
 	for (int i = 0; i < 16; ++i) {
-		read_byte(stream, &htable->L[i]);
+		err = read_byte(stream, &htable->L[i]);
+		RETURN_IF(err);
 	}
 
 	for (int i = 0; i < 16; ++i) {
 		uint8_t L = htable->L[i];
 
 		for (int l = 0; l < L; ++l) {
-			read_byte(stream, &htable->V[i][l]);
+			err = read_byte(stream, &htable->V[i][l]);
+			RETURN_IF(err);
 		}
 	}
 
@@ -372,10 +396,12 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 
 int parse_scan_header(FILE *stream)
 {
+	int err;
 	/* Number of image components in scan */
 	uint8_t Ns;
 
-	read_byte(stream, &Ns);
+	err = read_byte(stream, &Ns);
+	RETURN_IF(err);
 
 	printf("Ns = %" PRIu8 "\n", Ns);
 
@@ -383,8 +409,10 @@ int parse_scan_header(FILE *stream)
 		uint8_t Cs;
 		uint8_t Td, Ta;
 
-		read_byte(stream, &Cs);
-		read_nibbles(stream, &Td, &Ta);
+		err = read_byte(stream, &Cs);
+		RETURN_IF(err);
+		err = read_nibbles(stream, &Td, &Ta);
+		RETURN_IF(err);
 
 		printf("Cs%i = %" PRIu8 " Td%i = %" PRIu8 " Ta%i = %" PRIu8 "\n", j, Cs, j, Td, j, Ta);
 	}
@@ -393,9 +421,12 @@ int parse_scan_header(FILE *stream)
 	uint8_t Se;
 	uint8_t Ah, Al;
 
-	read_byte(stream, &Ss);
-	read_byte(stream, &Se);
-	read_nibbles(stream, &Ah, &Al);
+	err = read_byte(stream, &Ss);
+	RETURN_IF(err);
+	err = read_byte(stream, &Se);
+	RETURN_IF(err);
+	err = read_nibbles(stream, &Ah, &Al);
+	RETURN_IF(err);
 
 	assert(Ss == 0);
 	assert(Se == 63);
@@ -412,7 +443,8 @@ int parse_format(FILE *stream, struct context *context)
 	while (1) {
 		uint16_t marker;
 
-		read_marker(stream, &marker);
+		err = read_marker(stream, &marker);
+		RETURN_IF(err);
 
 		/* An asterisk (*) indicates a marker which stands alone,
 		 * that is, which is not the start of a marker segment. */
@@ -426,21 +458,24 @@ int parse_format(FILE *stream, struct context *context)
 			/* APP0 */
 			case 0xffe0:
 				printf("APP0\n");
-				read_length(stream, &len);
+				err = read_length(stream, &len);
+				RETURN_IF(err);
 				err = skip_segment(stream, len);
 				RETURN_IF(err);
 				break;
 			/* DQT Define quantization table(s) */
 			case 0xffdb:
 				printf("DQT\n");
-				read_length(stream, &len);
+				err = read_length(stream, &len);
+				RETURN_IF(err);
 				err = parse_qtable(stream, context);
 				RETURN_IF(err);
 				break;
 			/* SOF0 Baseline DCT */
 			case 0xffc0:
 				printf("SOF0\n");
-				read_length(stream, &len);
+				err = read_length(stream, &len);
+				RETURN_IF(err);
 				err = parse_frame_header(stream, context);
 				RETURN_IF(err);
 				break;
@@ -448,7 +483,8 @@ int parse_format(FILE *stream, struct context *context)
 			case 0xffc4:
 				printf("DHT\n");
 				pos = ftell(stream);
-				read_length(stream, &len);
+				err = read_length(stream, &len);
+				RETURN_IF(err);
 				/* parse multiple tables in single DHT */
 				do {
 					err = parse_huffman_tables(stream, context);
@@ -458,7 +494,8 @@ int parse_format(FILE *stream, struct context *context)
 			/* SOS Start of scan */
 			case 0xffda:
 				printf("SOS\n");
-				read_length(stream, &len);
+				err = read_length(stream, &len);
+				RETURN_IF(err);
 				err = parse_scan_header(stream);
 				RETURN_IF(err);
 				break;
