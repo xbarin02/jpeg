@@ -332,6 +332,7 @@ int parse(FILE *stream, struct context *context)
 		 * that is, which is not the start of a marker segment. */
 		switch (marker) {
 			uint16_t len;
+			long pos;
 			/* SOI* Start of image */
 			case 0xffd8:
 				printf("SOI\n");
@@ -357,9 +358,13 @@ int parse(FILE *stream, struct context *context)
 			/* DHT Define Huffman table(s) */
 			case 0xffc4:
 				printf("DHT\n");
+				pos = ftell(stream);
 				len = read_length(stream);
+			parse_htable:
 				parse_huffman_tables(stream, context);
-				/* TODO: parse multiple tables in single DHT */
+				/* parse multiple tables in single DHT */
+				if (ftell(stream) < pos + len)
+					goto parse_htable;
 				break;
 			default:
 				printf("unhandled marker 0x%" PRIx16 "\n", marker);
