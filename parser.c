@@ -108,6 +108,36 @@ int init_component(struct component *component)
 	return 0;
 }
 
+struct htable {
+	/* Table class – 0 = DC table or lossless table, 1 = AC table */
+	uint8_t Tc;
+
+	/* Number of Huffman codes of length i */
+	uint8_t L[16];
+
+	/*  Value associated with each Huffman code */
+	uint8_t V[16][255];
+};
+
+int init_htable(struct htable *htable)
+{
+	assert(htable != NULL);
+
+	htable->Tc = 0;
+
+	for (int i = 0; i < 16; ++i) {
+		htable->L[i] = 0;
+	}
+
+	for (int i = 0; i < 16; ++i) {
+		for (int j = 0; j < 255; ++j) {
+			htable->V[i][j] = 0;
+		}
+	}
+
+	return 0;
+}
+
 struct context {
 	/* Specifies one of four possible destinations at the decoder into
 	 * which the quantization table shall be installed */
@@ -123,6 +153,8 @@ struct context {
 	uint8_t components;
 
 	struct component component[256];
+
+	struct htable htable[4];
 };
 
 int init_context(struct context *context)
@@ -142,6 +174,10 @@ int init_context(struct context *context)
 
 	for (int i = 0; i < 256; ++i) {
 		init_component(&context->component[i]);
+	}
+
+	for (int i = 0; i < 4; ++i) {
+		init_htable(&context->htable[i]);
 	}
 
 	return 0;
@@ -258,9 +294,33 @@ int parse_frame_header(FILE *stream, struct context *context)
 	return 0;
 }
 
-int parse_huffman_tables(FILE *stream)
+int parse_huffman_tables(FILE *stream, struct context *context)
 {
-	/* TODO */
+	uint8_t Tc, Th;
+
+	assert(context != NULL);
+
+	read_nibbles(stream, &Tc, &Th);
+
+	printf("Tc = %" PRIu8 " Th = %" PRIu8 "\n", Tc, Th);
+
+	struct htable *htable = &context->htable[Th];
+
+	htable->Tc = Tc;
+
+	for (int i = 0; i < 16; ++i) {
+		htable->L[i] = read_byte(stream);
+	}
+
+	for (int i = 0; i < 16; ++i) {
+		uint8_t L = htable->L[i];
+
+		for (int l = 0; l < L; ++l) {
+			htable->V[i][l] = read_byte(stream);
+		}
+	}
+
+	return 0;
 }
 
 int parse(FILE *stream, struct context *context)
@@ -298,7 +358,8 @@ int parse(FILE *stream, struct context *context)
 			case 0xffc4:
 				printf("DHT\n");
 				len = read_length(stream);
-				parse_huffman_tables(stream);
+				parse_huffman_tables(stream, context);
+				/* TODO: parse multiple tables in single DHT */
 				break;
 			default:
 				printf("unhandled marker 0x%" PRIx16 "\n", marker);
