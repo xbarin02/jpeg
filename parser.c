@@ -21,6 +21,7 @@ enum {
 	RET_FAILURE_FILE_IO           = 0x1000, /**< I/O error */
 	RET_FAILURE_FILE_UNSUPPORTED  = 0x1001, /**< unsupported feature or file type */
 	RET_FAILURE_FILE_OPEN         = 0x1002, /**< file open failure */
+	RET_FAILURE_FILE_SEEK         = 0x1003,
 	/* 0x2xxx memory errors */
 	RET_FAILURE_MEMORY_ALLOCATION = 0x2000, /**< unable to allocate dynamic memory */
 	/* 0x3xxx general exceptions */
@@ -31,13 +32,20 @@ enum {
 	RET_LAST
 };
 
+#define RETURN_IF(err) \
+	do { \
+		if (err) { \
+			return (err); \
+		} \
+	} while (0)
+
 int skip_segment(FILE *stream, uint16_t len)
 {
 	if (fseek(stream, (long)len - 2, SEEK_CUR) != 0) {
-		abort();
+		return RET_FAILURE_FILE_SEEK;
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 uint8_t read_byte(FILE *stream)
@@ -279,7 +287,7 @@ int parse_qtable(FILE *stream, struct context *context)
 		printf("\n");
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int parse_frame_header(FILE *stream, struct context *context)
@@ -325,7 +333,7 @@ int parse_frame_header(FILE *stream, struct context *context)
 		context->component[C].Tq = Tq;
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int parse_huffman_tables(FILE *stream, struct context *context)
@@ -354,7 +362,7 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 		}
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int parse_scan_header(FILE *stream)
@@ -387,11 +395,13 @@ int parse_scan_header(FILE *stream)
 	assert(Ah == 0);
 	assert(Al == 0);
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int parse_format(FILE *stream, struct context *context)
 {
+	int err;
+
 	while (1) {
 		uint16_t marker = read_marker(stream);
 
@@ -408,19 +418,22 @@ int parse_format(FILE *stream, struct context *context)
 			case 0xffe0:
 				printf("APP0\n");
 				len = read_length(stream);
-				skip_segment(stream, len);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
 				break;
 			/* DQT Define quantization table(s) */
 			case 0xffdb:
 				printf("DQT\n");
 				len = read_length(stream);
-				parse_qtable(stream, context);
+				err = parse_qtable(stream, context);
+				RETURN_IF(err);
 				break;
 			/* SOF0 Baseline DCT */
 			case 0xffc0:
 				printf("SOF0\n");
 				len = read_length(stream);
-				parse_frame_header(stream, context);
+				err = parse_frame_header(stream, context);
+				RETURN_IF(err);
 				break;
 			/* DHT Define Huffman table(s) */
 			case 0xffc4:
@@ -429,26 +442,26 @@ int parse_format(FILE *stream, struct context *context)
 				len = read_length(stream);
 				/* parse multiple tables in single DHT */
 				do {
-					parse_huffman_tables(stream, context);
+					err = parse_huffman_tables(stream, context);
+					RETURN_IF(err);
 				} while (ftell(stream) < pos + len);
 				break;
 			/* SOS Start of scan */
 			case 0xffda:
 				printf("SOS\n");
 				len = read_length(stream);
-				parse_scan_header(stream);
+				err = parse_scan_header(stream);
+				RETURN_IF(err);
 				break;
 			/* EOI* End of image */
 			case 0xffd9:
 				printf("EOI\n");
 				break;
 			default:
-				printf("unhandled marker 0x%" PRIx16 "\n", marker);
-				abort();
+				fprintf(stderr, "unhandled marker 0x%" PRIx16 "\n", marker);
+				return RET_FAILURE_FILE_UNSUPPORTED;
 		}
 	}
-
-	return 1; /* not implemented */
 }
 
 int process_jpeg_stream(FILE *stream)
@@ -456,31 +469,40 @@ int process_jpeg_stream(FILE *stream)
 	struct context *context = malloc(sizeof(struct context));
 
 	if (context == NULL) {
-		abort();
+		fprintf(stderr, "malloc failure\n");
+		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
 	init_context(context);
 
-	parse_format(stream, context);
+	int err = parse_format(stream, context);
 
 	free(context);
 
-	return 0;
+	return err;
+}
+
+int process_jpeg_file(const char *path)
+{
+	FILE *stream = fopen(path, "r");
+
+	if (stream == NULL) {
+		fprintf(stderr, "fopen failure\n");
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	int err = process_jpeg_stream(stream);
+
+	fclose(stream);
+
+	return err;
 }
 
 int main(int argc, char *argv[])
 {
-	const char *path = "Car3.jpg";
+	const char *path = argc > 1 ? argv[1] : "Car3.jpg";
 
-	FILE *stream = fopen(path, "r");
-
-	if (stream == NULL) {
-		abort();
-	}
-
-	process_jpeg_stream(stream);
-
-	fclose(stream);
+	process_jpeg_file(path);
 
 	return 0;
 }
