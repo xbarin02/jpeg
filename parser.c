@@ -48,15 +48,13 @@ int skip_segment(FILE *stream, uint16_t len)
 	return RET_SUCCESS;
 }
 
-uint8_t read_byte(FILE *stream)
+int read_byte(FILE *stream, uint8_t *byte)
 {
-	uint8_t byte;
-
-	if (fread(&byte, sizeof(uint8_t), 1, stream) != 1) {
+	if (fread(byte, sizeof(uint8_t), 1, stream) != 1) {
 		abort();
 	}
 
-	return byte;
+	return RET_SUCCESS;
 }
 
 uint16_t read_word(FILE *stream)
@@ -89,11 +87,11 @@ uint16_t read_marker(FILE *stream)
 	long start = ftell(stream), end;
 
 	seek: do {
-		byte = read_byte(stream);
+		read_byte(stream, &byte);
 	} while (byte != 0xff);
 
 	do {
-		byte = read_byte(stream);
+		read_byte(stream, &byte);
 
 		switch (byte) {
 			case 0xff:
@@ -227,16 +225,16 @@ int init_context(struct context *context)
 
 int read_nibbles(FILE *stream, uint8_t *first, uint8_t *second)
 {
-	uint8_t b;
+	uint8_t byte;
 
 	assert(first != NULL);
 	assert(second != NULL);
 
-	b = read_byte(stream);
+	read_byte(stream, &byte);
 
 	/* The first 4-bit parameter of the pair shall occupy the most significant 4 bits of the byte.  */
-	*first = (b >> 4) & 15;
-	*second = (b >> 0) & 15;
+	*first = (byte >> 4) & 15;
+	*second = (byte >> 0) & 15;
 
 	return RET_SUCCESS;
 }
@@ -274,7 +272,9 @@ int parse_qtable(FILE *stream, struct context *context)
 
 	for (int i = 0; i < 64; ++i) {
 		if (Pq == 0) {
-			qtable->element[zigzag[i]] = (uint16_t)read_byte(stream);
+			uint8_t byte;
+			read_byte(stream, &byte);
+			qtable->element[zigzag[i]] = (uint16_t)byte;
 		} else {
 			qtable->element[zigzag[i]] = read_word(stream);
 		}
@@ -301,10 +301,10 @@ int parse_frame_header(FILE *stream, struct context *context)
 
 	assert(context != NULL);
 
-	P = read_byte(stream);
+	read_byte(stream, &P);
 	Y = read_word(stream);
 	X = read_word(stream);
-	Nf = read_byte(stream);
+	read_byte(stream, &Nf);
 
 	assert(P == 8);
 	assert(X > 0);
@@ -322,9 +322,9 @@ int parse_frame_header(FILE *stream, struct context *context)
 		uint8_t H, V;
 		uint8_t Tq;
 
-		C = read_byte(stream);
+		read_byte(stream, &C);
 		read_nibbles(stream, &H, &V);
-		Tq = read_byte(stream);
+		read_byte(stream, &Tq);
 
 		printf("C = %" PRIu8 " H = %" PRIu8 " V = %" PRIu8 " Tq = %" PRIu8 "\n", C, H, V, Tq);
 
@@ -351,14 +351,14 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	htable->Tc = Tc;
 
 	for (int i = 0; i < 16; ++i) {
-		htable->L[i] = read_byte(stream);
+		read_byte(stream, &htable->L[i]);
 	}
 
 	for (int i = 0; i < 16; ++i) {
 		uint8_t L = htable->L[i];
 
 		for (int l = 0; l < L; ++l) {
-			htable->V[i][l] = read_byte(stream);
+			read_byte(stream, &htable->V[i][l]);
 		}
 	}
 
@@ -368,7 +368,9 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 int parse_scan_header(FILE *stream)
 {
 	/* Number of image components in scan */
-	uint8_t Ns = read_byte(stream);
+	uint8_t Ns;
+
+	read_byte(stream, &Ns);
 
 	printf("Ns = %" PRIu8 "\n", Ns);
 
@@ -376,7 +378,7 @@ int parse_scan_header(FILE *stream)
 		uint8_t Cs;
 		uint8_t Td, Ta;
 
-		Cs = read_byte(stream);
+		read_byte(stream, &Cs);
 		read_nibbles(stream, &Td, &Ta);
 
 		printf("Cs%i = %" PRIu8 " Td%i = %" PRIu8 " Ta%i = %" PRIu8 "\n", j, Cs, j, Td, j, Ta);
@@ -386,8 +388,8 @@ int parse_scan_header(FILE *stream)
 	uint8_t Se;
 	uint8_t Ah, Al;
 
-	Ss = read_byte(stream);
-	Se = read_byte(stream);
+	read_byte(stream, &Ss);
+	read_byte(stream, &Se);
 	read_nibbles(stream, &Ah, &Al);
 
 	assert(Ss == 0);
