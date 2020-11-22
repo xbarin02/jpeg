@@ -52,25 +52,24 @@ uint16_t read_marker(FILE *stream)
 
 	/* Any marker may optionally be preceded by any
 	 * number of fill bytes, which are bytes assigned code X’FF’. */
-seek:
-	byte = read_byte(stream);
 
-	if (byte != 0xff) {
-		goto seek;
-	}
+	seek: do {
+		byte = read_byte(stream);
+	} while (byte != 0xff);
 
-repeat:
-	byte = read_byte(stream);
+	do {
+		byte = read_byte(stream);
 
-	switch (byte) {
-		case 0xff:
-			goto repeat;
-		/* not a marker */
-		case 0x00:
-			goto seek;
-		default:
-			return UINT16_C(0xff00) | byte;
-	}
+		switch (byte) {
+			case 0xff:
+				continue;
+			/* not a marker */
+			case 0x00:
+				goto seek;
+			default:
+				return UINT16_C(0xff00) | byte;
+		}
+	} while (1);
 }
 
 struct qtable {
@@ -397,11 +396,10 @@ int parse(FILE *stream, struct context *context)
 				printf("DHT\n");
 				pos = ftell(stream);
 				len = read_length(stream);
-			parse_htable:
-				parse_huffman_tables(stream, context);
 				/* parse multiple tables in single DHT */
-				if (ftell(stream) < pos + len)
-					goto parse_htable;
+				do {
+					parse_huffman_tables(stream, context);
+				} while (ftell(stream) < pos + len);
 				break;
 			/* SOS Start of scan */
 			case 0xffda:
