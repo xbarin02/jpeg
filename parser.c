@@ -128,7 +128,7 @@ int init_qtable(struct qtable *qtable)
 		qtable->element[i] = 0;
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 struct component {
@@ -147,7 +147,7 @@ int init_component(struct component *component)
 
 	component->Tq = 0;
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 struct htable {
@@ -177,7 +177,7 @@ int init_htable(struct htable *htable)
 		}
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 struct context {
@@ -222,7 +222,7 @@ int init_context(struct context *context)
 		init_htable(&context->htable[i]);
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int read_nibbles(FILE *stream, uint8_t *first, uint8_t *second)
@@ -238,7 +238,7 @@ int read_nibbles(FILE *stream, uint8_t *first, uint8_t *second)
 	*first = (b >> 4) & 15;
 	*second = (b >> 0) & 15;
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 /* zig-zag scan to raster scan */
@@ -466,6 +466,8 @@ int parse_format(FILE *stream, struct context *context)
 
 int process_jpeg_stream(FILE *stream)
 {
+	int err;
+
 	struct context *context = malloc(sizeof(struct context));
 
 	if (context == NULL) {
@@ -473,10 +475,14 @@ int process_jpeg_stream(FILE *stream)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	init_context(context);
+	err = init_context(context);
 
-	int err = parse_format(stream, context);
+	if (err) {
+		goto end;
+	}
 
+	err = parse_format(stream, context);
+end:
 	free(context);
 
 	return err;
