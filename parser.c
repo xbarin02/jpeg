@@ -318,10 +318,12 @@ int parse_scan_header(FILE *stream, struct context *context)
 	err = read_nibbles(stream, &Ah, &Al);
 	RETURN_IF(err);
 
-	assert(Ss == 0);
-	assert(Se == 63);
-	assert(Ah == 0);
-	assert(Al == 0);
+// 	assert(Ss == 0);
+// 	assert(Se == 63);
+	printf("Ss = %" PRIu8 " Se = %" PRIu8 "\n", Ss, Se);
+// 	assert(Ah == 0);
+// 	assert(Al == 0);
+	printf("Ah = %" PRIu8 " Al = %" PRIu8 "\n", Ah, Al);
 
 	return RET_SUCCESS;
 }
@@ -425,6 +427,14 @@ int parse_format(FILE *stream, struct context *context)
 			/* SOF0 Baseline DCT */
 			case 0xffc0:
 				printf("SOF0\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = parse_frame_header(stream, context);
+				RETURN_IF(err);
+				break;
+			/* SOF2 Progressive DCT */
+			case 0xffc2:
+				printf("SOF2\n");
 				err = read_length(stream, &len);
 				RETURN_IF(err);
 				err = parse_frame_header(stream, context);
