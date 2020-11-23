@@ -1,5 +1,8 @@
 #include <stddef.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include "huffman.h"
 
 /* Figure C.1 – Generation of table of Huffman code sizes */
