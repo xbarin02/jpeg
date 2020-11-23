@@ -12,10 +12,10 @@ all: $(BINS)
 
 .PHONY: clean
 clean:
-	$(RM) -- $(BINS)
+	$(RM) -- $(BINS) *.o
 
 .PHONY: distclean
 distclean: clean
 	$(RM) -- *.gcda
 
-parser: parser.o io.o
+parser: parser.o common.o io.o
