@@ -33,6 +33,10 @@ struct component {
 	uint8_t H, V;
 	/* Quantization table destination selector */
 	uint8_t Tq;
+
+	/* DC entropy coding table destination selector
+	 * AC entropy coding table destination selector */
+	uint8_t Td, Ta;
 };
 
 int init_component(struct component *component)
@@ -43,6 +47,9 @@ int init_component(struct component *component)
 	component->V = 0;
 
 	component->Tq = 0;
+
+	component->Td = 0;
+	component->Ta = 0;
 
 	return RET_SUCCESS;
 }
@@ -266,7 +273,7 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
-int parse_scan_header(FILE *stream)
+int parse_scan_header(FILE *stream, struct context *context)
 {
 	int err;
 	/* Number of image components in scan */
@@ -287,6 +294,9 @@ int parse_scan_header(FILE *stream)
 		RETURN_IF(err);
 
 		printf("Cs%i = %" PRIu8 " Td%i = %" PRIu8 " Ta%i = %" PRIu8 "\n", j, Cs, j, Td, j, Ta);
+
+		context->component[Cs].Td = Td;
+		context->component[Cs].Ta = Ta;
 	}
 
 	uint8_t Ss;
@@ -368,7 +378,7 @@ int parse_format(FILE *stream, struct context *context)
 				printf("SOS\n");
 				err = read_length(stream, &len);
 				RETURN_IF(err);
-				err = parse_scan_header(stream);
+				err = parse_scan_header(stream, context);
 				RETURN_IF(err);
 				break;
 			/* EOI* End of image */
