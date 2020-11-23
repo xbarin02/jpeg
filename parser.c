@@ -411,6 +411,16 @@ int parse_format(FILE *stream, struct context *context)
 				err = parse_restart_interval(stream, context);
 				RETURN_IF(err);
 				break;
+			/* RSTm* Restart with modulo 8 count “m” */
+			case 0xffd0:
+			case 0xffd1:
+			case 0xffd2:
+			case 0xffd3:
+			case 0xffd4:
+			case 0xffd5:
+			case 0xffd6:
+			case 0xffd7:
+				break;
 			default:
 				fprintf(stderr, "unhandled marker 0x%" PRIx16 "\n", marker);
 				return RET_FAILURE_FILE_UNSUPPORTED;
