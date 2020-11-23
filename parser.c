@@ -101,6 +101,9 @@ struct context {
 	struct component component[256];
 
 	struct htable htable[4];
+
+	/* Restart interval */
+	uint16_t Ri;
 };
 
 int init_context(struct context *context)
@@ -125,6 +128,8 @@ int init_context(struct context *context)
 	for (int i = 0; i < 4; ++i) {
 		init_htable(&context->htable[i]);
 	}
+
+	context->Ri = 0;
 
 	return RET_SUCCESS;
 }
@@ -318,6 +323,19 @@ int parse_scan_header(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
+int parse_restart_interval(FILE *stream, struct context *context)
+{
+	int err;
+	uint16_t Ri;
+
+	err = read_word(stream, &Ri);
+	RETURN_IF(err);
+
+	context->Ri = Ri;
+
+	return RET_SUCCESS;
+}
+
 int parse_format(FILE *stream, struct context *context)
 {
 	int err;
@@ -385,6 +403,14 @@ int parse_format(FILE *stream, struct context *context)
 			case 0xffd9:
 				printf("EOI\n");
 				return RET_SUCCESS;
+			/* DRI Define restart interval */
+			case 0xffdd:
+				printf("DRI\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = parse_restart_interval(stream, context);
+				RETURN_IF(err);
+				break;
 			default:
 				fprintf(stderr, "unhandled marker 0x%" PRIx16 "\n", marker);
 				return RET_FAILURE_FILE_UNSUPPORTED;
