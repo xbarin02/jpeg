@@ -336,6 +336,30 @@ int parse_restart_interval(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
+int parse_comment(FILE *stream, uint16_t len)
+{
+	size_t l = len - 2;
+
+	char *buf = malloc(l + 1);
+
+	if (buf == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	if (fread(buf, sizeof(char), l, stream) != l) {
+		free(buf);
+		return RET_FAILURE_FILE_IO;
+	}
+
+	buf[l] = 0;
+
+	printf("%s\n", buf);
+
+	free(buf);
+
+	return RET_SUCCESS;
+}
+
 int parse_format(FILE *stream, struct context *context)
 {
 	int err;
@@ -358,6 +382,30 @@ int parse_format(FILE *stream, struct context *context)
 			/* APP0 */
 			case 0xffe0:
 				printf("APP0\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
+			/* APP1 */
+			case 0xffe1:
+				printf("APP1\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
+			/* APP2 */
+			case 0xffe2:
+				printf("APP2\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
+			/* APP13 */
+			case 0xffed:
+				printf("APP13\n");
 				err = read_length(stream, &len);
 				RETURN_IF(err);
 				err = skip_segment(stream, len);
@@ -420,6 +468,14 @@ int parse_format(FILE *stream, struct context *context)
 			case 0xffd5:
 			case 0xffd6:
 			case 0xffd7:
+				break;
+			/* COM Comment */
+			case 0xfffe:
+				printf("COM\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = parse_comment(stream, len);
+				RETURN_IF(err);
 				break;
 			default:
 				fprintf(stderr, "unhandled marker 0x%" PRIx16 "\n", marker);
