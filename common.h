@@ -54,6 +54,9 @@ struct component {
 	uint8_t Td, Ta;
 };
 
+/*
+ * This reflects DHT segment (B.2.4.2)
+ */
 struct htable {
 	/* Table class – 0 = DC table or lossless table, 1 = AC table */
 	uint8_t Tc;
@@ -64,7 +67,25 @@ struct htable {
 	/*  Value associated with each Huffman code */
 	uint8_t V[16][255];
 
+	/* unrolled V[] */
 	uint8_t V_[16 * 255];
+};
+
+/*
+ * This reflects Annex C
+ */
+struct hcode {
+	/* contains a list of code lengths */
+	size_t huff_size[256];
+	/*  contains the Huffman codes corresponding to those lengths */
+	uint16_t huff_code[256];
+	/* the index of the last entry in the table */
+	size_t last_k;
+	/* EHUFCO and EHUFSI, are created by reordering the codes specified by
+	 * HUFFCODE and HUFFSIZE according to the symbol values assigned to each code
+	 */
+	uint16_t e_huf_co[256];
+	size_t e_huf_si[256];
 };
 
 struct context {
@@ -84,6 +105,7 @@ struct context {
 	struct component component[256];
 
 	struct htable htable[4];
+	struct hcode hcode[4];
 
 	/* Restart interval */
 	uint16_t Ri;

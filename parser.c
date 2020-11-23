@@ -119,14 +119,6 @@ int parse_frame_header(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
-struct hcode {
-	size_t huff_size[256];
-	size_t last_k;
-	uint16_t huff_code[256];
-	uint16_t e_huf_co[256];
-	size_t e_huf_si[256];
-};
-
 /* Figure C.1 – Generation of table of Huffman code sizes */
 int generate_size_table(struct htable *htable, struct hcode *hcode)
 {
@@ -159,9 +151,9 @@ int generate_size_table(struct htable *htable, struct hcode *hcode)
 #undef HUFFSIZE
 #undef LASTK
 
-	printf("[DEBUG] last_k = %zu\n", hcode->last_k);
+// 	printf("[DEBUG] last_k = %zu\n", hcode->last_k);
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 /* Figure C.2 – Generation of table of Huffman codes */
@@ -188,7 +180,7 @@ int generate_code_table(struct htable *htable, struct hcode *hcode)
 
 		assert(K < 256);
 		if (HUFFSIZE(K) == 0) {
-			return 0;
+			return RET_SUCCESS;
 		}
 
 		do {
@@ -221,7 +213,7 @@ int order_codes(struct htable *htable, struct hcode *hcode)
 		uint8_t I = HUFFVAL(K);
 		EHUFCO(I) = HUFFCODE(K);
 		EHUFSI(I) = HUFFSIZE(K);
-		printf("[DEBUG] val=%i size=%zu code=%" PRIu16 "\n", I, EHUFSI(I), EHUFCO(I));
+// 		printf("[DEBUG] value=%i size=%zu code=%" PRIu16 "\n", I, EHUFSI(I), EHUFCO(I));
 		K++;
 	} while (K < LASTK);
 
@@ -232,7 +224,21 @@ int order_codes(struct htable *htable, struct hcode *hcode)
 #undef HUFFSIZE
 #undef HUFFCODE
 
-	return 0;
+	return RET_SUCCESS;
+}
+
+int conv_htable_to_hcode(struct htable *htable, struct hcode *hcode)
+{
+	int err;
+
+	err = generate_size_table(htable, hcode);
+	RETURN_IF(err);
+	err = generate_code_table(htable, hcode);
+	RETURN_IF(err);
+	err = order_codes(htable, hcode);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
 }
 
 int parse_huffman_tables(FILE *stream, struct context *context)
@@ -270,13 +276,10 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 		}
 	}
 
-#if 0
 	/* Annex C */
-	struct hcode hcode;
-	generate_size_table(htable, &hcode);
-	generate_code_table(htable, &hcode);
-	order_codes(htable, &hcode);
-#endif
+	struct hcode *hcode = &context->hcode[Th];
+	err = conv_htable_to_hcode(htable, hcode);
+	RETURN_IF(err);
 
 	return RET_SUCCESS;
 }
