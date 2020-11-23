@@ -21,6 +21,11 @@ const uint8_t zigzag[64] = {
 	53, 60, 61, 54, 47, 55, 62, 63
 };
 
+const char *Pq_to_str[] = {
+	[0] = "8-bit",
+	[1] = "16-bit"
+};
+
 /* B.2.4.1 Quantization table-specification syntax */
 int parse_qtable(FILE *stream, struct context *context)
 {
@@ -33,7 +38,7 @@ int parse_qtable(FILE *stream, struct context *context)
 	err = read_nibbles(stream, &Pq, &Tq);
 	RETURN_IF(err);
 
-	printf("Pq = %" PRIu8 " Tq = %" PRIu8 "\n", Pq, Tq);
+	printf("Pq = %" PRIu8 " (%s), Tq = %" PRIu8 " (destination identifier)\n", Pq, Pq_to_str[Pq], Tq);
 
 	assert(Tq < 4);
 	assert(Pq < 2);
