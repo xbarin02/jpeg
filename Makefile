@@ -1,5 +1,5 @@
-CFLAGS+=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_XOPEN_SOURCE -D_GNU_SOURCE -fopenmp
-LDFLAGS+=-fopenmp
+CFLAGS+=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_XOPEN_SOURCE -D_GNU_SOURCE
+LDFLAGS+=
 LDLIBS+=
 BINS=parser
 

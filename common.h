@@ -63,6 +63,8 @@ struct htable {
 
 	/*  Value associated with each Huffman code */
 	uint8_t V[16][255];
+
+	uint8_t V_[16 * 255];
 };
 
 struct context {

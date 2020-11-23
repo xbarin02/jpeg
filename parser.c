@@ -119,6 +119,122 @@ int parse_frame_header(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
+struct hcode {
+	size_t huff_size[256];
+	size_t last_k;
+	uint16_t huff_code[256];
+	uint16_t e_huf_co[256];
+	size_t e_huf_si[256];
+};
+
+/* Figure C.1 – Generation of table of Huffman code sizes */
+int generate_size_table(struct htable *htable, struct hcode *hcode)
+{
+	assert(htable != NULL);
+	assert(hcode != NULL);
+
+#define BITS(I)     (htable->L[(I) - 1])
+#define HUFFSIZE(K) (hcode->huff_size[(K)])
+#define LASTK       (hcode->last_k)
+
+	size_t K = 0;
+	size_t I = 1;
+	size_t J = 1;
+
+	do {
+		while (J <= BITS(I)) {
+			assert(K < 256);
+			HUFFSIZE(K) = I;
+			K++;
+			J++;
+		}
+		I++;
+		J = 1;
+	} while (I <= 16);
+	assert(K < 256);
+	HUFFSIZE(K) = 0;
+	LASTK = K;
+
+#undef BITS
+#undef HUFFSIZE
+#undef LASTK
+
+	printf("[DEBUG] last_k = %zu\n", hcode->last_k);
+
+	return 0;
+}
+
+/* Figure C.2 – Generation of table of Huffman codes */
+int generate_code_table(struct htable *htable, struct hcode *hcode)
+{
+	assert(htable != NULL);
+	assert(hcode != NULL);
+
+#define HUFFSIZE(K) (hcode->huff_size[(K)])
+#define HUFFCODE(K) (hcode->huff_code[(K)])
+
+	size_t K = 0;
+	uint16_t CODE = 0;
+	size_t SI = HUFFSIZE(0);
+
+	do {
+		do {
+			assert(K < 256);
+			HUFFCODE(K) = CODE;
+			CODE++;
+			K++;
+			assert(K < 256);
+		} while (HUFFSIZE(K) == SI);
+
+		assert(K < 256);
+		if (HUFFSIZE(K) == 0) {
+			return 0;
+		}
+
+		do {
+			CODE <<= 1;
+			SI++;
+			assert(K < 256);
+		} while (HUFFSIZE(K) != SI);
+	} while (1);
+
+#undef HUFFSIZE
+#undef HUFFCODE
+}
+
+/* Figure C.3 – Ordering procedure for encoding procedure code tables */
+int order_codes(struct htable *htable, struct hcode *hcode)
+{
+	assert(htable != NULL);
+	assert(hcode != NULL);
+
+#define HUFFVAL(K)  (htable->V_[(K)])
+#define EHUFCO(I)   (hcode->e_huf_co[(I)])
+#define EHUFSI(I)   (hcode->e_huf_si[(I)])
+#define LASTK       (hcode->last_k)
+#define HUFFSIZE(K) (hcode->huff_size[(K)])
+#define HUFFCODE(K) (hcode->huff_code[(K)])
+
+	size_t K = 0;
+
+	do {
+		uint8_t I = HUFFVAL(K);
+		EHUFCO(I) = HUFFCODE(K);
+		EHUFSI(I) = HUFFSIZE(K);
+		printf("[DEBUG] val=%i size=%zu code=%" PRIu16 "\n", I, EHUFSI(I), EHUFCO(I));
+		K++;
+	} while (K < LASTK);
+
+#undef HUFFVAL
+#undef EHUFCO
+#undef EHUFSI
+#undef LASTK
+#undef HUFFSIZE
+#undef HUFFCODE
+
+	return 0;
+}
+
 int parse_huffman_tables(FILE *stream, struct context *context)
 {
 	int err;
@@ -140,14 +256,27 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 		RETURN_IF(err);
 	}
 
+	uint8_t *v_ = htable->V_;
+
 	for (int i = 0; i < 16; ++i) {
 		uint8_t L = htable->L[i];
 
 		for (int l = 0; l < L; ++l) {
 			err = read_byte(stream, &htable->V[i][l]);
 			RETURN_IF(err);
+
+			*v_ = htable->V[i][l];
+			v_++;
 		}
 	}
+
+#if 0
+	/* Annex C */
+	struct hcode hcode;
+	generate_size_table(htable, &hcode);
+	generate_code_table(htable, &hcode);
+	order_codes(htable, &hcode);
+#endif
 
 	return RET_SUCCESS;
 }
