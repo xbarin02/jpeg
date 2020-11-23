@@ -38,7 +38,7 @@ int parse_qtable(FILE *stream, struct context *context)
 	err = read_nibbles(stream, &Pq, &Tq);
 	RETURN_IF(err);
 
-	printf("Pq = %" PRIu8 " (%s), Tq = %" PRIu8 " (destination identifier)\n", Pq, Pq_to_str[Pq], Tq);
+	printf("Pq = %" PRIu8 " (%s), Tq = %" PRIu8 " (QT identifier)\n", Pq, Pq_to_str[Pq], Tq);
 
 	assert(Tq < 4);
 	assert(Pq < 2);
@@ -96,7 +96,7 @@ int parse_frame_header(FILE *stream, struct context *context)
 	assert(X > 0);
 	assert(Nf > 0);
 
-	printf("P = %" PRIu8 " Y = %" PRIu16 " X = %" PRIu16 " Nf = %" PRIu8 "\n", P, Y, X, Nf);
+	printf("P = %" PRIu8 " (Sample precision), Y = %" PRIu16 ", X = %" PRIu16 ", Nf = %" PRIu8 " (Number of image components)\n", P, Y, X, Nf);
 
 	context->precision = P;
 	context->Y = Y;
@@ -115,7 +115,7 @@ int parse_frame_header(FILE *stream, struct context *context)
 		err = read_byte(stream, &Tq);
 		RETURN_IF(err);
 
-		printf("C = %" PRIu8 " H = %" PRIu8 " V = %" PRIu8 " Tq = %" PRIu8 "\n", C, H, V, Tq);
+		printf("C = %" PRIu8 " (Component identifier), H = %" PRIu8 ", V = %" PRIu8 ", Tq = %" PRIu8 " (QT identifier)\n", C, H, V, Tq);
 
 		context->component[C].H = H;
 		context->component[C].V = V;
@@ -124,6 +124,11 @@ int parse_frame_header(FILE *stream, struct context *context)
 
 	return RET_SUCCESS;
 }
+
+const char *Tc_to_str[] = {
+	[0] = "DC table",
+	[1] = "AC table"
+};
 
 int parse_huffman_tables(FILE *stream, struct context *context)
 {
@@ -135,7 +140,7 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	err = read_nibbles(stream, &Tc, &Th);
 	RETURN_IF(err);
 
-	printf("Tc = %" PRIu8 " Th = %" PRIu8 "\n", Tc, Th);
+	printf("Tc = %" PRIu8 " (%s) Th = %" PRIu8 " (HT identifier)\n", Tc, Tc_to_str[Tc], Th);
 
 	struct htable *htable = &context->htable[Th];
 
@@ -177,7 +182,7 @@ int parse_scan_header(FILE *stream, struct context *context)
 	err = read_byte(stream, &Ns);
 	RETURN_IF(err);
 
-	printf("Ns = %" PRIu8 "\n", Ns);
+	printf("Ns = %" PRIu8 " (Number of image components in scan)\n", Ns);
 
 	for (int j = 0; j < Ns; ++j) {
 		uint8_t Cs;
@@ -188,7 +193,7 @@ int parse_scan_header(FILE *stream, struct context *context)
 		err = read_nibbles(stream, &Td, &Ta);
 		RETURN_IF(err);
 
-		printf("Cs%i = %" PRIu8 " Td%i = %" PRIu8 " Ta%i = %" PRIu8 "\n", j, Cs, j, Td, j, Ta);
+		printf("Cs%i = %" PRIu8 " (Component identifier), Td%i = %" PRIu8 " (DC HT identifier), Ta%i = %" PRIu8 " (AC HT identifier)\n", j, Cs, j, Td, j, Ta);
 
 		context->component[Cs].Td = Td;
 		context->component[Cs].Ta = Ta;
@@ -207,10 +212,10 @@ int parse_scan_header(FILE *stream, struct context *context)
 
 // 	assert(Ss == 0);
 // 	assert(Se == 63);
-	printf("Ss = %" PRIu8 " Se = %" PRIu8 "\n", Ss, Se);
+	printf("Ss = %" PRIu8 " (the first DCT coefficient), Se = %" PRIu8 " (the last DCT coefficient)\n", Ss, Se);
 // 	assert(Ah == 0);
 // 	assert(Al == 0);
-	printf("Ah = %" PRIu8 " Al = %" PRIu8 "\n", Ah, Al);
+	printf("Ah = %" PRIu8 " (bit position high), Al = %" PRIu8 " (bit position low)\n", Ah, Al);
 
 	return RET_SUCCESS;
 }
