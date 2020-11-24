@@ -8,6 +8,7 @@
 #include "common.h"
 #include "io.h"
 #include "huffman.h"
+#include "bits.h"
 
 /* zig-zag scan to raster scan */
 const uint8_t zigzag[64] = {
@@ -222,6 +223,7 @@ int parse_scan_header(FILE *stream, struct context *context)
 
 int read_ecs(FILE *stream)
 {
+#if 0
 	int err;
 	size_t bytes = 0;
 
@@ -243,6 +245,32 @@ end:
 	printf("*** %zu bytes discarded ***\n", bytes);
 
 	return RET_SUCCESS;
+#else
+	int err;
+	struct bits bits;
+	size_t count = 0;
+
+	init_bits(&bits, stream);
+
+	do {
+		uint8_t bit;
+
+		err = next_bit(&bits, &bit);
+		switch (err) {
+			case RET_SUCCESS:
+				count++;
+				continue;
+			case RET_FAILURE_NO_MORE_DATA:
+				goto end;
+			default:
+				return err;
+		}
+	} while (1);
+end:
+	printf("*** %zu bytes discarded ***\n", count / 8);
+
+	return RET_SUCCESS;
+#endif
 }
 
 int parse_restart_interval(FILE *stream, struct context *context)
