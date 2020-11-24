@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include "huffman.h"
+#include "bits.h"
 
 /* Figure C.1 – Generation of table of Huffman code sizes */
 int generate_size_table(struct htable *htable, struct hcode *hcode)
@@ -173,4 +174,19 @@ int query_code(struct vlc *vlc, struct htable *htable, struct hcode *hcode, uint
 #undef HUFFCODE
 
 	return -1; /* not found */
+}
+
+int read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uint8_t *value)
+{
+	struct vlc vlc;
+
+	init_vlc(&vlc);
+
+	do {
+		uint8_t bit;
+		next_bit(bits, &bit); // read next bit
+		vlc_add_bit(&vlc, (uint16_t)bit); // add this bit to VLC
+	} while (query_code(&vlc, htable, hcode, value) == -1); // query Huffman table
+
+	return RET_SUCCESS;
 }

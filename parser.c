@@ -232,15 +232,16 @@ int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
-int read_block(FILE *stream, struct context *context, struct scan *scan, uint8_t Cs)
+int read_block(struct bits *bits, struct context *context, struct scan *scan, uint8_t Cs)
 {
 	/* read DC coefficient */
+	// read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uint8_t *value)
 	/* read 63 AC coefficients */
 	return RET_SUCCESS;
 }
 
 /* read MCU */
-int read_macroblock(FILE *stream, struct context *context, struct scan *scan)
+int read_macroblock(struct bits *bits, struct context *context, struct scan *scan)
 {
 	assert(scan != NULL);
 
@@ -254,7 +255,7 @@ int read_macroblock(FILE *stream, struct context *context, struct scan *scan)
 		for (int v = 0; v < V; ++v) {
 			for (int h = 0; h < H; ++h) {
 				/* read block */
-				read_block(stream, context, scan, Cs);
+				read_block(bits, context, scan, Cs);
 			}
 		}
 	}
@@ -271,7 +272,7 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 	init_bits(&bits, stream);
 
 	/* TODO: loop over macroblocks */
-	read_macroblock(stream, context, scan);
+	read_macroblock(&bits, context, scan);
 
 	/* HACK: eat all bits */
 	do {
