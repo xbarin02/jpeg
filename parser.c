@@ -243,6 +243,9 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	struct hcode *hcode_dc = &context->hcode[Td];
 	struct hcode *hcode_ac = &context->hcode[Ta];
 
+	assert(htable_dc->Tc == 0);
+	assert(htable_ac->Tc == 1);
+
 	/* cat. code */
 	uint8_t value;
 
@@ -251,6 +254,7 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	RETURN_IF(err);
 
 	/* TODO read extra bits */
+	printf("[DEBUG] DC cat = %" PRIu8 "\n", value);
 
 	/* read 63 AC coefficients */
 
