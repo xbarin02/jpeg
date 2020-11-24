@@ -126,3 +126,51 @@ int conv_htable_to_hcode(struct htable *htable, struct hcode *hcode)
 
 	return RET_SUCCESS;
 }
+
+/*
+ * query if the code is present in htable/hcode, and return its value
+ *
+ * Usage:
+ *
+ * do {
+ *     next_bit(&bits, &bit); // read next bit
+ *     vlc_add_bit(vlc, bit); // add this bit to VLC
+ * } while (query_code(vlc, htable, hcode, value) == -1); // query Huffman table
+ *
+ * // value ... category code
+ * // read extra bits
+ */
+int query_code(struct vlc *vlc, struct htable *htable, struct hcode *hcode, uint8_t *value)
+{
+	assert(vlc != NULL);
+	assert(htable != NULL);
+	assert(hcode != NULL);
+	assert(value != NULL);
+
+#define HUFFVAL(K)  (htable->V_[(K)])
+#define LASTK       (hcode->last_k)
+#define HUFFSIZE(K) (hcode->huff_size[(K)])
+#define HUFFCODE(K) (hcode->huff_code[(K)])
+
+	size_t K = 0;
+
+	do {
+		uint16_t code = HUFFCODE(K);
+		size_t size = HUFFSIZE(K);
+
+		if (vlc->size == size && vlc->code == code) {
+			uint8_t I = HUFFVAL(K);
+			*value = I;
+			return RET_SUCCESS;
+		}
+
+		K++;
+	} while (K < LASTK);
+
+#undef HUFFVAL
+#undef LASTK
+#undef HUFFSIZE
+#undef HUFFCODE
+
+	return -1; /* not found */
+}
