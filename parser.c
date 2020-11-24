@@ -254,7 +254,7 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	err = read_code(bits, htable_dc, hcode_dc, &cat);
 	RETURN_IF(err);
 
-	printf("[DEBUG] DC cat = %" PRIu8 "\n", cat);
+// 	printf("[DEBUG] DC cat = %" PRIu8 "\n", cat);
 
 	/* read extra bits */
 	uint16_t extra;
@@ -293,6 +293,8 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 
 	assert(scan != NULL);
 
+// 	printf("[DEBUG] reading macroblock...\n");
+
 	/* for each component */
 	for (int j = 0; j < scan->Ns; ++j) {
 		uint8_t Cs = scan->Cs[j];
@@ -309,6 +311,8 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 		}
 	}
 
+// 	printf("[DEBUG] macroblock complete\n");
+
 	return RET_SUCCESS;
 }
 
@@ -320,12 +324,14 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 
 	init_bits(&bits, stream);
 
+	size_t mblocks = 0;
 	/* TODO: loop over macroblocks */
 	do {
 		err = read_macroblock(&bits, context, scan);
 		if (err == RET_FAILURE_NO_MORE_DATA)
 			goto end;
 		RETURN_IF(err);
+		mblocks++;
 	} while (1);
 
 	/* HACK: eat all bits */
@@ -345,6 +351,8 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 	} while (1);
 end:
 	printf("*** %zu bytes discarded ***\n", count / 8);
+
+	printf("*** %zu macroblocks ***\n", mblocks);
 
 	return RET_SUCCESS;
 }
