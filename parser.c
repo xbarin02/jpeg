@@ -223,29 +223,6 @@ int parse_scan_header(FILE *stream, struct context *context)
 
 int read_ecs(FILE *stream)
 {
-#if 0
-	int err;
-	size_t bytes = 0;
-
-	do {
-		uint8_t byte;
-
-		err = read_ecs_byte(stream, &byte);
-		switch (err) {
-			case RET_SUCCESS:
-				bytes++;
-				continue;
-			case RET_FAILURE_NO_MORE_DATA:
-				goto end;
-			default:
-				return err;
-		}
-	} while (1);
-end:
-	printf("*** %zu bytes discarded ***\n", bytes);
-
-	return RET_SUCCESS;
-#else
 	int err;
 	struct bits bits;
 	size_t count = 0;
@@ -270,7 +247,6 @@ end:
 	printf("*** %zu bytes discarded ***\n", count / 8);
 
 	return RET_SUCCESS;
-#endif
 }
 
 int parse_restart_interval(FILE *stream, struct context *context)
