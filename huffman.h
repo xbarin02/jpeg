@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "vlc.h"
+#include "bits.h"
 
 int generate_size_table(struct htable *htable, struct hcode *hcode);
 
@@ -16,5 +17,7 @@ int conv_htable_to_hcode(struct htable *htable, struct hcode *hcode);
  * query if the code is present in htable/hcode, and return its value
  */
 int query_code(struct vlc *vlc, struct htable *htable, struct hcode *hcode, uint8_t *value);
+
+int read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uint8_t *value);
 
 #endif

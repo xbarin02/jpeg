@@ -232,8 +232,9 @@ int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
-int read_block(struct bits *bits, struct context *context, struct scan *scan, uint8_t Cs)
+int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 {
+	int err;
 	uint8_t Td = context->component[Cs].Td;
 	uint8_t Ta = context->component[Cs].Ta;
 
@@ -242,9 +243,14 @@ int read_block(struct bits *bits, struct context *context, struct scan *scan, ui
 	struct hcode *hcode_dc = &context->hcode[Td];
 	struct hcode *hcode_ac = &context->hcode[Ta];
 
+	uint8_t value;
+
 	/* read DC coefficient */
-	// read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uint8_t *value)
+	err = read_code(bits, htable_dc, hcode_dc, &value);
+	RETURN_IF(err);
+
 	/* read 63 AC coefficients */
+
 	return RET_SUCCESS;
 }
 
@@ -263,7 +269,7 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 		for (int v = 0; v < V; ++v) {
 			for (int h = 0; h < H; ++h) {
 				/* read block */
-				read_block(bits, context, scan, Cs);
+				read_block(bits, context, Cs);
 			}
 		}
 	}
