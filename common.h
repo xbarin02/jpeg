@@ -58,9 +58,6 @@ struct component {
  * This reflects DHT segment (B.2.4.2)
  */
 struct htable {
-	/* Table class – 0 = DC table or lossless table, 1 = AC table */
-	uint8_t Tc;
-
 	/* Number of Huffman codes of length i */
 	uint8_t L[16];
 

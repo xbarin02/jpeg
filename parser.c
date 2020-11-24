@@ -145,8 +145,6 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 
 	struct htable *htable = &context->htable[Tc][Th];
 
-	htable->Tc = Tc;
-
 	for (int i = 0; i < 16; ++i) {
 		err = read_byte(stream, &htable->L[i]);
 		RETURN_IF(err);
@@ -243,9 +241,6 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	struct htable *htable_ac = &context->htable[1][Ta];
 	struct hcode *hcode_dc = &context->hcode[0][Td];
 	struct hcode *hcode_ac = &context->hcode[1][Ta];
-
-	assert(htable_dc->Tc == 0);
-	assert(htable_ac->Tc == 1);
 
 	/* cat. code */
 	uint8_t cat;

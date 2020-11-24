@@ -34,8 +34,6 @@ int init_htable(struct htable *htable)
 {
 	assert(htable != NULL);
 
-	htable->Tc = 0;
-
 	for (int i = 0; i < 16; ++i) {
 		htable->L[i] = 0;
 	}
@@ -68,8 +66,10 @@ int init_context(struct context *context)
 		init_component(&context->component[i]);
 	}
 
-	for (int i = 0; i < 4; ++i) {
-		init_htable(&context->htable[i]);
+	for (int j = 0; j < 2; ++j) {
+		for (int i = 0; i < 4; ++i) {
+			init_htable(&context->htable[j][i]);
+		}
 	}
 
 	context->Ri = 0;
