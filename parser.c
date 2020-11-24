@@ -174,7 +174,12 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
-int parse_scan_header(FILE *stream, struct context *context)
+struct scan {
+	uint8_t Ns;
+	uint8_t Cs[256];
+};
+
+int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 {
 	int err;
 	/* Number of image components in scan */
@@ -184,6 +189,10 @@ int parse_scan_header(FILE *stream, struct context *context)
 	RETURN_IF(err);
 
 	printf("Ns = %" PRIu8 " (Number of image components in scan)\n", Ns);
+
+	assert(scan != NULL);
+
+	scan->Ns = Ns;
 
 	for (int j = 0; j < Ns; ++j) {
 		uint8_t Cs;
@@ -195,6 +204,8 @@ int parse_scan_header(FILE *stream, struct context *context)
 		RETURN_IF(err);
 
 		printf("Cs%i = %" PRIu8 " (Component identifier), Td%i = %" PRIu8 " (DC HT identifier), Ta%i = %" PRIu8 " (AC HT identifier)\n", j, Cs, j, Td, j, Ta);
+
+		scan->Cs[j] = Cs;
 
 		context->component[Cs].Td = Td;
 		context->component[Cs].Ta = Ta;
@@ -221,7 +232,37 @@ int parse_scan_header(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
-int read_ecs(FILE *stream)
+int read_block(FILE *stream, struct context *context, struct scan *scan, uint8_t Cs)
+{
+	/* read DC coefficient */
+	/* read 63 AC coefficients */
+	return RET_SUCCESS;
+}
+
+/* read MCU */
+int read_macroblock(FILE *stream, struct context *context, struct scan *scan)
+{
+	assert(scan != NULL);
+
+	/* for each component */
+	for (int j = 0; j < scan->Ns; ++j) {
+		uint8_t Cs = scan->Cs[j];
+		uint8_t H = context->component[Cs].H;
+		uint8_t V = context->component[Cs].V;
+
+		/* for each 8x8 block */
+		for (int v = 0; v < V; ++v) {
+			for (int h = 0; h < H; ++h) {
+				/* read block */
+				read_block(stream, context, scan, Cs);
+			}
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 {
 	int err;
 	struct bits bits;
@@ -229,6 +270,10 @@ int read_ecs(FILE *stream)
 
 	init_bits(&bits, stream);
 
+	/* TODO: loop over macroblocks */
+	read_macroblock(stream, context, scan);
+
+	/* HACK: eat all bits */
 	do {
 		uint8_t bit;
 
@@ -301,6 +346,7 @@ int parse_format(FILE *stream, struct context *context)
 		switch (marker) {
 			uint16_t len;
 			long pos;
+			struct scan scan;
 			/* SOI* Start of image */
 			case 0xffd8:
 				printf("SOI\n");
@@ -378,9 +424,9 @@ int parse_format(FILE *stream, struct context *context)
 				printf("SOS\n");
 				err = read_length(stream, &len);
 				RETURN_IF(err);
-				err = parse_scan_header(stream, context);
+				err = parse_scan_header(stream, context, &scan);
 				RETURN_IF(err);
-				err = read_ecs(stream);
+				err = read_ecs(stream, context, &scan);
 				RETURN_IF(err);
 				break;
 			/* EOI* End of image */
@@ -404,7 +450,7 @@ int parse_format(FILE *stream, struct context *context)
 			case 0xffd5:
 			case 0xffd6:
 			case 0xffd7:
-				err = read_ecs(stream);
+				err = read_ecs(stream, context, &scan);
 				RETURN_IF(err);
 				break;
 			/* COM Comment */
