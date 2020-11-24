@@ -217,7 +217,12 @@ int parse_scan_header(FILE *stream, struct context *context)
 // 	assert(Al == 0);
 	printf("Ah = %" PRIu8 " (bit position high), Al = %" PRIu8 " (bit position low)\n", Ah, Al);
 
-#if 1
+	return RET_SUCCESS;
+}
+
+int read_ecs(FILE *stream)
+{
+	int err;
 	size_t bytes = 0;
 
 	do {
@@ -236,7 +241,6 @@ int parse_scan_header(FILE *stream, struct context *context)
 	} while (1);
 end:
 	printf("*** %zu bytes discarded ***\n", bytes);
-#endif
 
 	return RET_SUCCESS;
 }
@@ -371,6 +375,8 @@ int parse_format(FILE *stream, struct context *context)
 				err = read_length(stream, &len);
 				RETURN_IF(err);
 				err = parse_scan_header(stream, context);
+				RETURN_IF(err);
+				err = read_ecs(stream);
 				RETURN_IF(err);
 				break;
 			/* EOI* End of image */
