@@ -104,6 +104,8 @@ int parse_frame_header(FILE *stream, struct context *context)
 	context->X = X;
 	context->components = Nf;
 
+	printf("[DEBUG] rough estimate %zu blocks\n", ((((size_t)X + 7) / 8) * (((size_t)Y + 7) / 8)));
+
 	for (int i = 0; i < Nf; ++i) {
 		uint8_t C;
 		uint8_t H, V;
