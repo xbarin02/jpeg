@@ -234,6 +234,14 @@ int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 
 int read_block(struct bits *bits, struct context *context, struct scan *scan, uint8_t Cs)
 {
+	uint8_t Td = context->component[Cs].Td;
+	uint8_t Ta = context->component[Cs].Ta;
+
+	struct htable *htable_dc = &context->htable[Td];
+	struct htable *htable_ac = &context->htable[Ta];
+	struct hcode *hcode_dc = &context->hcode[Td];
+	struct hcode *hcode_ac = &context->hcode[Ta];
+
 	/* read DC coefficient */
 	// read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uint8_t *value)
 	/* read 63 AC coefficients */
