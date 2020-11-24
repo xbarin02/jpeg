@@ -143,7 +143,7 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 
 	printf("Tc = %" PRIu8 " (%s) Th = %" PRIu8 " (HT identifier)\n", Tc, Tc_to_str[Tc], Th);
 
-	struct htable *htable = &context->htable[Th];
+	struct htable *htable = &context->htable[Tc][Th];
 
 	htable->Tc = Tc;
 
@@ -167,7 +167,8 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	}
 
 	/* Annex C */
-	struct hcode *hcode = &context->hcode[Th];
+	struct hcode *hcode = &context->hcode[Tc][Th];
+
 	err = conv_htable_to_hcode(htable, hcode);
 	RETURN_IF(err);
 
@@ -238,10 +239,10 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	uint8_t Td = context->component[Cs].Td;
 	uint8_t Ta = context->component[Cs].Ta;
 
-	struct htable *htable_dc = &context->htable[Td];
-	struct htable *htable_ac = &context->htable[Ta];
-	struct hcode *hcode_dc = &context->hcode[Td];
-	struct hcode *hcode_ac = &context->hcode[Ta];
+	struct htable *htable_dc = &context->htable[0][Td];
+	struct htable *htable_ac = &context->htable[1][Ta];
+	struct hcode *hcode_dc = &context->hcode[0][Td];
+	struct hcode *hcode_ac = &context->hcode[1][Ta];
 
 	assert(htable_dc->Tc == 0);
 	assert(htable_ac->Tc == 1);

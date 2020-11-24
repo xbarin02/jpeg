@@ -105,8 +105,9 @@ struct context {
 	struct component component[256];
 
 	/* FIXME BUG there are two types of tables, DC and AC; the identifiers are not unique accross these types */
-	struct htable htable[4];
-	struct hcode hcode[4];
+	/* [0=DC/1=AC][identifier] */
+	struct htable htable[2][4];
+	struct hcode hcode[2][4];
 
 	/* Restart interval */
 	uint16_t Ri;
