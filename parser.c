@@ -217,6 +217,27 @@ int parse_scan_header(FILE *stream, struct context *context)
 // 	assert(Al == 0);
 	printf("Ah = %" PRIu8 " (bit position high), Al = %" PRIu8 " (bit position low)\n", Ah, Al);
 
+#if 1
+	size_t bytes = 0;
+
+	do {
+		uint8_t byte;
+
+		err = read_ecs_byte(stream, &byte);
+		switch (err) {
+			case RET_SUCCESS:
+				bytes++;
+				continue;
+			case RET_FAILURE_NO_MORE_DATA:
+				goto end;
+			default:
+				return err;
+		}
+	} while (1);
+end:
+	printf("*** %zu bytes discarded ***\n", bytes);
+#endif
+
 	return RET_SUCCESS;
 }
 

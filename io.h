@@ -16,4 +16,7 @@ int skip_segment(FILE *stream, uint16_t len);
 
 int read_marker(FILE *stream, uint16_t *marker);
 
+/* read entropy-coded segment byte */
+int read_ecs_byte(FILE *stream, uint8_t *byte);
+
 #endif

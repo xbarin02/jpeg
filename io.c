@@ -103,3 +103,33 @@ int skip_segment(FILE *stream, uint16_t len)
 
 	return RET_SUCCESS;
 }
+
+/* F.1.2.3 Byte stuffing */
+int read_ecs_byte(FILE *stream, uint8_t *byte)
+{
+	int err;
+	uint8_t b;
+
+	assert(byte != NULL);
+
+	err = read_byte(stream, &b);
+	RETURN_IF(err);
+
+	if (b == 0xff) {
+		err = read_byte(stream, &b);
+		RETURN_IF(err);
+
+		if (b == 0x00) {
+			*byte = 0xff;
+			return RET_SUCCESS;
+		} else {
+			if (fseek(stream, -2, SEEK_CUR) != 0) {
+				return RET_FAILURE_FILE_SEEK;
+			}
+			return RET_FAILURE_NO_MORE_DATA;
+		}
+	} else {
+		*byte = b;
+		return RET_SUCCESS;
+	}
+}
