@@ -100,7 +100,7 @@ int order_codes(struct htable *htable, struct hcode *hcode)
 		uint8_t I = HUFFVAL(K);
 		EHUFCO(I) = HUFFCODE(K);
 		EHUFSI(I) = HUFFSIZE(K);
-// 		printf("[DEBUG] value=%i size=%zu code=%" PRIu16 "\n", I, EHUFSI(I), EHUFCO(I));
+// 		printf("[DEBUG] value=%i cat=%i size=%zu code=%" PRIu16 "\n", I, I & 15, EHUFSI(I), EHUFCO(I));
 		K++;
 	} while (K < LASTK);
 
