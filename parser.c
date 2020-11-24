@@ -428,6 +428,8 @@ int parse_format(FILE *stream, struct context *context)
 			case 0xffd5:
 			case 0xffd6:
 			case 0xffd7:
+				err = read_ecs(stream);
+				RETURN_IF(err);
 				break;
 			/* COM Comment */
 			case 0xfffe:
