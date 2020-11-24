@@ -262,6 +262,26 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	RETURN_IF(err);
 
 	/* TODO read 63 AC coefficients */
+	/* F.1.2.2 Huffman encoding of AC coefficients */
+	int rem = 63; // remaining
+	do {
+		uint8_t rs;
+		err = read_code(bits, htable_ac, hcode_ac, &rs);
+		RETURN_IF(err);
+		// TODO: read extra bits
+		cat = rs & 15;
+		err = read_extra_bits(bits, cat, &extra);
+		RETURN_IF(err);
+
+		uint8_t zrl = rs >> 4;
+
+		// EOB
+		if (rs == 0) {
+			break;
+		}
+
+		rem -= zrl + 1;
+	} while (rem > 0);
 
 	return RET_SUCCESS;
 }
@@ -269,6 +289,8 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 /* read MCU */
 int read_macroblock(struct bits *bits, struct context *context, struct scan *scan)
 {
+	int err;
+
 	assert(scan != NULL);
 
 	/* for each component */
@@ -281,7 +303,8 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 		for (int v = 0; v < V; ++v) {
 			for (int h = 0; h < H; ++h) {
 				/* read block */
-				read_block(bits, context, Cs);
+				err = read_block(bits, context, Cs);
+				RETURN_IF(err);
 			}
 		}
 	}
@@ -298,7 +321,12 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 	init_bits(&bits, stream);
 
 	/* TODO: loop over macroblocks */
-	read_macroblock(&bits, context, scan);
+	do {
+		err = read_macroblock(&bits, context, scan);
+		if (err == RET_FAILURE_NO_MORE_DATA)
+			goto end;
+		RETURN_IF(err);
+	} while (1);
 
 	/* HACK: eat all bits */
 	do {
