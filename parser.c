@@ -286,11 +286,11 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 		err = read_code(bits, htable_ac, hcode_ac, &rs);
 		RETURN_IF(err);
 		// TODO: read extra bits
-		cat = rs & 15;
+		cat = value_to_category(rs);
 		err = read_extra_bits(bits, cat, &extra);
 		RETURN_IF(err);
 
-		uint8_t zrl = rs >> 4;
+		uint8_t zrl = value_to_zerorun(rs);
 
 		// EOB
 		if (rs == 0) {
