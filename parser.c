@@ -248,16 +248,20 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	assert(htable_ac->Tc == 1);
 
 	/* cat. code */
-	uint8_t value;
+	uint8_t cat;
 
 	/* read DC coefficient */
-	err = read_code(bits, htable_dc, hcode_dc, &value);
+	err = read_code(bits, htable_dc, hcode_dc, &cat);
 	RETURN_IF(err);
 
-	/* TODO read extra bits */
-	printf("[DEBUG] DC cat = %" PRIu8 "\n", value);
+	printf("[DEBUG] DC cat = %" PRIu8 "\n", cat);
 
-	/* read 63 AC coefficients */
+	/* read extra bits */
+	uint16_t extra;
+	err = read_extra_bits(bits, cat, &extra);
+	RETURN_IF(err);
+
+	/* TODO read 63 AC coefficients */
 
 	return RET_SUCCESS;
 }

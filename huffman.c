@@ -182,15 +182,37 @@ int query_code(struct vlc *vlc, struct htable *htable, struct hcode *hcode, uint
 
 int read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uint8_t *value)
 {
+	int err;
 	struct vlc vlc;
 
 	init_vlc(&vlc);
 
 	do {
 		uint8_t bit;
-		next_bit(bits, &bit); // read next bit
+		err = next_bit(bits, &bit);
+		RETURN_IF(err);
 		vlc_add_bit(&vlc, (uint16_t)bit); // add this bit to VLC
 	} while (query_code(&vlc, htable, hcode, value) == -1); // query Huffman table
+
+	return RET_SUCCESS;
+}
+
+int read_extra_bits(struct bits *bits, uint8_t count, uint16_t *value)
+{
+	int err;
+	uint16_t v = 0;
+
+	for (int i = 0; i < count; ++i) {
+		uint8_t bit;
+		err = next_bit(bits, &bit);
+		RETURN_IF(err);
+		v <<= 1;
+		v |= bit & 1;
+	}
+
+	assert(value != NULL);
+
+	*value = v;
 
 	return RET_SUCCESS;
 }
