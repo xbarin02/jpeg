@@ -72,6 +72,11 @@ int parse_qtable(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
+size_t ceil_div(size_t n, size_t d)
+{
+	return (n + (d - 1)) / d;
+}
+
 int parse_frame_header(FILE *stream, struct context *context)
 {
 	int err;
@@ -104,7 +109,7 @@ int parse_frame_header(FILE *stream, struct context *context)
 	context->X = X;
 	context->components = Nf;
 
-	printf("[DEBUG] rough estimate %zu blocks\n", ((((size_t)X + 7) / 8) * (((size_t)Y + 7) / 8)));
+	uint8_t max_H = 0, max_V = 0;
 
 	for (int i = 0; i < Nf; ++i) {
 		uint8_t C;
@@ -123,7 +128,12 @@ int parse_frame_header(FILE *stream, struct context *context)
 		context->component[C].H = H;
 		context->component[C].V = V;
 		context->component[C].Tq = Tq;
+
+		max_H = (H > max_H) ? H : max_H;
+		max_V = (V > max_V) ? V : max_V;
 	}
+
+	printf("[DEBUG] estimated %zu macroblocks\n", ceil_div(X, 8 * max_H) * ceil_div(Y, 8 * max_V));
 
 	return RET_SUCCESS;
 }
@@ -231,6 +241,16 @@ int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 	printf("Ah = %" PRIu8 " (bit position high), Al = %" PRIu8 " (bit position low)\n", Ah, Al);
 
 	return RET_SUCCESS;
+}
+
+uint8_t value_to_category(uint8_t value)
+{
+	return value & 15;
+}
+
+uint8_t value_to_zerorun(uint8_t value)
+{
+	return value >> 4;
 }
 
 int read_block(struct bits *bits, struct context *context, uint8_t Cs)
