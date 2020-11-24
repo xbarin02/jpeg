@@ -243,11 +243,14 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	struct hcode *hcode_dc = &context->hcode[Td];
 	struct hcode *hcode_ac = &context->hcode[Ta];
 
+	/* cat. code */
 	uint8_t value;
 
 	/* read DC coefficient */
 	err = read_code(bits, htable_dc, hcode_dc, &value);
 	RETURN_IF(err);
+
+	/* TODO read extra bits */
 
 	/* read 63 AC coefficients */
 
