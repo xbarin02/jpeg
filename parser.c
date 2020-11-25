@@ -254,6 +254,30 @@ uint16_t M(uint16_t n)
 	return (1 << n) - 1;
 }
 
+int32_t decode_coeff(uint8_t cat, uint16_t extra)
+{
+	/* two's complement */
+	int32_t c = 0;
+
+	switch (cat) {
+		int sign;
+		case 0:
+			break;
+		default:
+			c = INT32_C(1) << (cat - 1); // base (positive)
+			sign = extra >> (cat - 1); // 0 negative, 1 positive
+			if (sign == 0) {
+				c = -c;
+				c |= (extra + 1) & M(cat);
+			} else {
+				c = +c;
+				c |= (extra    ) & M(cat);
+			}
+	}
+
+	return c;
+}
+
 struct coeff_dc {
 	int32_t c;
 };
@@ -276,23 +300,7 @@ int read_dc(struct bits *bits, struct hcode *hcode_dc, struct coeff_dc *coeff_dc
 	RETURN_IF(err);
 
 	/* two's complement */
-	int32_t c = 0;
-
-	switch (cat) {
-		int sign;
-		case 0:
-			break;
-		default:
-			c = INT32_C(1) << (cat - 1); // base (positive)
-			sign = extra >> (cat - 1); // 0 negative, 1 positive
-			if (sign == 0) {
-				c = -c;
-				c |= (extra + 1) & M(cat); // When DIFF is negative, the SSSS low order bits of (DIFF – 1) are appended.
-			} else {
-				c = +c;
-				c |= (extra    ) & M(cat); // When DIFF is positive, the SSSS low order bits of DIFF are appended.
-			}
-	}
+	int32_t c = decode_coeff(cat, extra);
 
 	assert(coeff_dc != NULL);
 
@@ -338,24 +346,7 @@ int read_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_ac
 	}
 
 	/* two's complement */
-	int32_t c = 0;
-
-	switch (cat) {
-		int sign;
-		case 0:
-			// valid on ZRL and EOB
-			break;
-		default:
-			c = INT32_C(1) << (cat - 1); // base (positive)
-			sign = extra >> (cat - 1); // 0 negative, 1 positive
-			if (sign == 0) {
-				c = -c;
-				c |= (extra + 1) & M(cat);
-			} else {
-				c = +c;
-				c |= (extra    ) & M(cat);
-			}
-	}
+	int32_t c = decode_coeff(cat, extra);
 
 	coeff_ac->c = c;
 
