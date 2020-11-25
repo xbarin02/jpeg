@@ -63,21 +63,23 @@ struct htable {
 
 	/*  Value associated with each Huffman code */
 	uint8_t V[16][255];
-
-	/* unrolled V[] */
-	uint8_t V_[16 * 255];
 };
 
 /*
  * This reflects Annex C
  */
 struct hcode {
+	/* unrolled htable.V[] */
+	uint8_t V_[16 * 255];
+
 	/* contains a list of code lengths */
 	size_t huff_size[256];
 	/*  contains the Huffman codes corresponding to those lengths */
 	uint16_t huff_code[256];
+
 	/* the index of the last entry in the table */
 	size_t last_k;
+
 	/* EHUFCO and EHUFSI, are created by reordering the codes specified by
 	 * HUFFCODE and HUFFSIZE according to the symbol values assigned to each code
 	 */

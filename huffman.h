@@ -16,9 +16,9 @@ int conv_htable_to_hcode(struct htable *htable, struct hcode *hcode);
 /*
  * query if the code is present in htable/hcode, and return its value
  */
-int query_code(struct vlc *vlc, struct htable *htable, struct hcode *hcode, uint8_t *value);
+int query_code(struct vlc *vlc, struct hcode *hcode, uint8_t *value);
 
-int read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uint8_t *value);
+int read_code(struct bits *bits, struct hcode *hcode, uint8_t *value);
 
 int read_extra_bits(struct bits *bits, uint8_t count, uint16_t *value);
 

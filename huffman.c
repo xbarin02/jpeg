@@ -87,7 +87,7 @@ int order_codes(struct htable *htable, struct hcode *hcode)
 	assert(htable != NULL);
 	assert(hcode != NULL);
 
-#define HUFFVAL(K)  (htable->V_[(K)])
+#define HUFFVAL(K)  (hcode->V_[(K)])
 #define EHUFCO(I)   (hcode->e_huf_co[(I)])
 #define EHUFSI(I)   (hcode->e_huf_si[(I)])
 #define LASTK       (hcode->last_k)
@@ -118,10 +118,26 @@ int conv_htable_to_hcode(struct htable *htable, struct hcode *hcode)
 {
 	int err;
 
+	assert(htable != NULL);
+	assert(hcode != NULL);
+
+	uint8_t *v_ = hcode->V_;
+
+	for (int i = 0; i < 16; ++i) {
+		uint8_t L = htable->L[i];
+
+		for (int l = 0; l < L; ++l) {
+			*v_ = htable->V[i][l];
+			v_++;
+		}
+	}
+
 	err = generate_size_table(htable, hcode);
 	RETURN_IF(err);
+
 	err = generate_code_table(htable, hcode);
 	RETURN_IF(err);
+
 	err = order_codes(htable, hcode);
 	RETURN_IF(err);
 
@@ -141,14 +157,13 @@ int conv_htable_to_hcode(struct htable *htable, struct hcode *hcode)
  * // value ... category code
  * // read extra bits
  */
-int query_code(struct vlc *vlc, struct htable *htable, struct hcode *hcode, uint8_t *value)
+int query_code(struct vlc *vlc, struct hcode *hcode, uint8_t *value)
 {
 	assert(vlc != NULL);
-	assert(htable != NULL);
 	assert(hcode != NULL);
 	assert(value != NULL);
 
-#define HUFFVAL(K)  (htable->V_[(K)])
+#define HUFFVAL(K)  (hcode->V_[(K)])
 #define LASTK       (hcode->last_k)
 #define HUFFSIZE(K) (hcode->huff_size[(K)])
 #define HUFFCODE(K) (hcode->huff_code[(K)])
@@ -180,7 +195,7 @@ int query_code(struct vlc *vlc, struct htable *htable, struct hcode *hcode, uint
 	return -1; /* not found */
 }
 
-int read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uint8_t *value)
+int read_code(struct bits *bits, struct hcode *hcode, uint8_t *value)
 {
 	int err;
 	struct vlc vlc;
@@ -192,7 +207,7 @@ int read_code(struct bits *bits, struct htable *htable, struct hcode *hcode, uin
 		err = next_bit(bits, &bit);
 		RETURN_IF(err);
 		vlc_add_bit(&vlc, (uint16_t)bit); // add this bit to VLC
-	} while (query_code(&vlc, htable, hcode, value) == -1); // query Huffman table
+	} while (query_code(&vlc, hcode, value) == -1); // query Huffman table
 
 	return RET_SUCCESS;
 }

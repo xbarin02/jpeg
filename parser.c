@@ -162,17 +162,12 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 		RETURN_IF(err);
 	}
 
-	uint8_t *v_ = htable->V_;
-
 	for (int i = 0; i < 16; ++i) {
 		uint8_t L = htable->L[i];
 
 		for (int l = 0; l < L; ++l) {
 			err = read_byte(stream, &htable->V[i][l]);
 			RETURN_IF(err);
-
-			*v_ = htable->V[i][l];
-			v_++;
 		}
 	}
 
@@ -259,8 +254,6 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	uint8_t Td = context->component[Cs].Td;
 	uint8_t Ta = context->component[Cs].Ta;
 
-	struct htable *htable_dc = &context->htable[0][Td];
-	struct htable *htable_ac = &context->htable[1][Ta];
 	struct hcode *hcode_dc = &context->hcode[0][Td];
 	struct hcode *hcode_ac = &context->hcode[1][Ta];
 
@@ -268,7 +261,7 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	uint8_t cat;
 
 	/* read DC coefficient */
-	err = read_code(bits, htable_dc, hcode_dc, &cat);
+	err = read_code(bits, hcode_dc, &cat);
 	RETURN_IF(err);
 
 	/* read extra bits */
@@ -281,7 +274,7 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	int rem = 63; // remaining
 	do {
 		uint8_t rs;
-		err = read_code(bits, htable_ac, hcode_ac, &rs);
+		err = read_code(bits, hcode_ac, &rs);
 		RETURN_IF(err);
 
 		cat = value_to_category(rs);
