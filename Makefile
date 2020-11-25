@@ -18,4 +18,4 @@ clean:
 distclean: clean
 	$(RM) -- *.gcda
 
-parser: parser.o common.o io.o huffman.o bits.o vlc.o
+parser: parser.o common.o io.o huffman.o bits.o vlc.o coeffs.o
