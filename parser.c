@@ -353,7 +353,11 @@ int read_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_ac
 	return RET_SUCCESS;
 }
 
-int read_block(struct bits *bits, struct context *context, uint8_t Cs)
+struct block {
+	int32_t c[64];
+};
+
+int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct block *block)
 {
 	int err;
 	uint8_t Td = context->component[Cs].Td;
@@ -368,6 +372,16 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	err = read_dc(bits, hcode_dc, &coeff_dc);
 	RETURN_IF(err);
 
+	assert(block != NULL);
+
+	block->c[zigzag[0]] = coeff_dc.c;
+
+	// reset all remaining 63 coefficients to zero
+	for (int i = 1; i < 64; ++i) {
+		block->c[zigzag[i]] = 0;
+	}
+
+	int i = 1; // AC coefficient pointer
 	/* read 63 AC coefficients */
 	/* F.1.2.2 Huffman encoding of AC coefficients */
 	int rem = 63; // remaining
@@ -382,6 +396,10 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 		if (coeff_ac.eob) {
 			break;
 		}
+
+		// zero run + one AC coeff.
+		i += coeff_ac.zrl;
+		block->c[zigzag[i]] = coeff_ac.c;
 
 		rem -= coeff_ac.zrl + 1;
 	} while (rem > 0);
@@ -398,6 +416,9 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 
 // 	printf("[DEBUG] reading macroblock...\n");
 
+	/* HACK */
+	struct block block;
+
 	/* for each component */
 	for (int j = 0; j < scan->Ns; ++j) {
 		uint8_t Cs = scan->Cs[j];
@@ -408,7 +429,7 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 		for (int v = 0; v < V; ++v) {
 			for (int h = 0; h < H; ++h) {
 				/* read block */
-				err = read_block(bits, context, Cs);
+				err = read_block(bits, context, Cs, &block);
 				RETURN_IF(err);
 			}
 		}
