@@ -301,6 +301,67 @@ int read_dc(struct bits *bits, struct hcode *hcode_dc, struct coeff_dc *coeff_dc
 	return RET_SUCCESS;
 }
 
+struct coeff_ac {
+	int eob; // is end-of-block?
+	uint8_t zrl; // zero run
+	int32_t c; // the coefficient
+};
+
+int read_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_ac)
+{
+	int err;
+
+	// RS = binary ’RRRRSSSS’
+	uint8_t rs;
+
+	err = read_code(bits, hcode_ac, &rs);
+	RETURN_IF(err);
+
+	uint8_t cat = value_to_category(rs);
+
+	// read extra bits
+	uint16_t extra;
+	err = read_extra_bits(bits, cat, &extra);
+	RETURN_IF(err);
+
+	uint8_t zrl = value_to_zerorun(rs);
+
+	coeff_ac->zrl = zrl;
+
+	assert(coeff_ac != NULL);
+
+	// EOB
+	if (rs == 0) {
+		coeff_ac->eob = 1;
+	} else {
+		coeff_ac->eob = 0;
+	}
+
+	/* two's complement */
+	int32_t c = 0;
+
+	switch (cat) {
+		int sign;
+		case 0:
+			// valid on ZRL and EOB
+			break;
+		default:
+			c = INT32_C(1) << (cat - 1); // base (positive)
+			sign = extra >> (cat - 1); // 0 negative, 1 positive
+			if (sign == 0) {
+				c = -c;
+				c |= (extra + 1) & M(cat);
+			} else {
+				c = +c;
+				c |= (extra    ) & M(cat);
+			}
+	}
+
+	coeff_ac->c = c;
+
+	return RET_SUCCESS;
+}
+
 int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 {
 	int err;
@@ -320,28 +381,18 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	/* F.1.2.2 Huffman encoding of AC coefficients */
 	int rem = 63; // remaining
 	do {
-		/* cat. code */
-		uint8_t cat;
-		/* extra bits */
-		uint16_t extra;
-		uint8_t rs;
-		err = read_code(bits, hcode_ac, &rs);
+		struct coeff_ac coeff_ac;
+
+		/* read AC coefficient */
+		err = read_ac(bits, hcode_ac, &coeff_ac);
 		RETURN_IF(err);
-
-		cat = value_to_category(rs);
-
-		// read extra bits
-		err = read_extra_bits(bits, cat, &extra);
-		RETURN_IF(err);
-
-		uint8_t zrl = value_to_zerorun(rs);
 
 		// EOB
-		if (rs == 0) {
+		if (coeff_ac.eob) {
 			break;
 		}
 
-		rem -= zrl + 1;
+		rem -= coeff_ac.zrl + 1;
 	} while (rem > 0);
 
 	return RET_SUCCESS;
