@@ -246,13 +246,17 @@ int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 }
 
 /* read MCU */
-int read_macroblock(struct bits *bits, struct context *context, struct scan *scan)
+int read_macroblock(struct bits *bits, struct context *context, struct scan *scan, size_t seq_no)
 {
 	int err;
 
 	assert(scan != NULL);
+	assert(context != NULL);
 
-// 	printf("[DEBUG] reading macroblock...\n");
+	size_t x = seq_no % context->m_x;
+	size_t y = seq_no / context->m_x;
+
+// 	printf("[DEBUG] reading macroblock... x=%zu y=%zu\n", x, y);
 
 	/* HACK */
 	struct block block;
@@ -288,7 +292,7 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 	size_t mblocks = 0;
 	/* loop over macroblocks */
 	do {
-		err = read_macroblock(&bits, context, scan);
+		err = read_macroblock(&bits, context, scan, mblocks);
 		if (err == RET_FAILURE_NO_MORE_DATA)
 			goto end;
 		RETURN_IF(err);
