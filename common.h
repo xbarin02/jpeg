@@ -65,6 +65,9 @@ struct component {
 	/* DC entropy coding table destination selector
 	 * AC entropy coding table destination selector */
 	uint8_t Td, Ta;
+
+	/* blocks horizontally and vertically */
+	size_t b_x, b_y;
 };
 
 /*
@@ -123,6 +126,9 @@ struct context {
 
 	/* Restart interval */
 	uint16_t Ri;
+
+	/* macroblocks horizontally and vertically */
+	size_t m_x, m_y;
 };
 
 int init_qtable(struct qtable *qtable);
