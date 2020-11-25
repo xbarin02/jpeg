@@ -264,12 +264,11 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 {
 	int err;
 	struct bits bits;
-	size_t count = 0;
 
 	init_bits(&bits, stream);
 
 	size_t mblocks = 0;
-	/* TODO: loop over macroblocks */
+	/* loop over macroblocks */
 	do {
 		err = read_macroblock(&bits, context, scan);
 		if (err == RET_FAILURE_NO_MORE_DATA)
@@ -278,24 +277,7 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 		mblocks++;
 	} while (1);
 
-	/* HACK: eat all bits */
-	do {
-		uint8_t bit;
-
-		err = next_bit(&bits, &bit);
-		switch (err) {
-			case RET_SUCCESS:
-				count++;
-				continue;
-			case RET_FAILURE_NO_MORE_DATA:
-				goto end;
-			default:
-				return err;
-		}
-	} while (1);
 end:
-	printf("*** %zu bytes discarded ***\n", count / 8);
-
 	printf("*** %zu macroblocks ***\n", mblocks);
 
 	return RET_SUCCESS;
