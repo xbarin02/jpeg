@@ -27,6 +27,11 @@ int init_component(struct component *component)
 	component->Td = 0;
 	component->Ta = 0;
 
+	component->b_x = 0;
+	component->b_y = 0;
+
+	component->buffer = NULL;
+
 	return RET_SUCCESS;
 }
 
@@ -73,6 +78,9 @@ int init_context(struct context *context)
 	}
 
 	context->Ri = 0;
+
+	context->m_x = 0;
+	context->m_y = 0;
 
 	return RET_SUCCESS;
 }

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+struct block; /* fwd declaration to avoid circular dependency coeffs.h <=> common.h */
+
 /**
  * \brief Error codes
  *
@@ -68,6 +70,8 @@ struct component {
 
 	/* blocks horizontally and vertically */
 	size_t b_x, b_y;
+
+	struct block *buffer;
 };
 
 /*

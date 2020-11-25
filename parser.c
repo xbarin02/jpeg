@@ -139,6 +139,12 @@ int parse_frame_header(FILE *stream, struct context *context)
 			context->component[i].b_y = b_y;
 
 			printf("[DEBUG] C = %i: %zu blocks\n", i, b_x * b_y);
+
+			context->component[i].buffer = malloc(sizeof(struct block) * b_x * b_y);
+
+			if (context->component[i].buffer == NULL) {
+				return RET_FAILURE_MEMORY_ALLOCATION;
+			}
 		}
 	}
 
@@ -502,6 +508,10 @@ int process_jpeg_stream(FILE *stream)
 
 	err = parse_format(stream, context);
 end:
+	for (int i = 0; i < 256; ++i) {
+		free(context->component[i].buffer);
+	}
+
 	free(context);
 
 	return err;
