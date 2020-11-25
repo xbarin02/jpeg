@@ -437,7 +437,8 @@ int parse_format(FILE *stream, struct context *context)
 				RETURN_IF(err);
 				err = parse_frame_header(stream, context);
 				RETURN_IF(err);
-				break;
+				fprintf(stderr, "Progressive DCT not supported!\n");
+				return RET_FAILURE_FILE_UNSUPPORTED;
 			/* DHT Define Huffman table(s) */
 			case 0xffc4:
 				printf("DHT\n");
