@@ -122,7 +122,18 @@ int parse_frame_header(FILE *stream, struct context *context)
 		max_V = (V > max_V) ? V : max_V;
 	}
 
-	printf("[DEBUG] estimated %zu macroblocks\n", ceil_div(X, 8 * max_H) * ceil_div(Y, 8 * max_V));
+	printf("[DEBUG] expecting %zu macroblocks\n", ceil_div(X, 8 * max_H) * ceil_div(Y, 8 * max_V));
+
+	for (int i = 0; i < 256; ++i) {
+		uint8_t H, V;
+		H = context->component[i].H;
+		V = context->component[i].V;
+		if (H != 0) {
+			size_t x = ceil_div(X * H, 8 * max_H);
+			size_t y = ceil_div(Y * V, 8 * max_V);
+			printf("[DEBUG] C = %i: %zu x %zu blocks\n", i, x, y);
+		}
+	}
 
 	return RET_SUCCESS;
 }
