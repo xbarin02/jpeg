@@ -132,13 +132,13 @@ int parse_frame_header(FILE *stream, struct context *context)
 		H = context->component[i].H;
 		V = context->component[i].V;
 		if (H != 0) {
-			size_t b_x = ceil_div(X * H, 8 * max_H);
-			size_t b_y = ceil_div(Y * V, 8 * max_V);
+			size_t b_x = ceil_div(X, 8 * max_H) * H;
+			size_t b_y = ceil_div(Y, 8 * max_V) * V;
 
 			context->component[i].b_x = b_x;
 			context->component[i].b_y = b_y;
 
-			printf("[DEBUG] C = %i: %zu blocks\n", i, b_x * b_y);
+			printf("[DEBUG] C = %i: %zu blocks (x=%zu y=%zu)\n", i, b_x * b_y, b_x, b_y);
 
 			context->component[i].buffer = malloc(sizeof(struct block) * b_x * b_y);
 
@@ -268,9 +268,6 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 
 // 	printf("[DEBUG] reading macroblock... x=%zu y=%zu\n", x, y);
 
-	/* HACK */
-	struct block block;
-
 	/* for each component */
 	for (int j = 0; j < scan->Ns; ++j) {
 		uint8_t Cs = scan->Cs[j];
@@ -282,10 +279,20 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 		/* for each 8x8 block */
 		for (int v = 0; v < V; ++v) {
 			for (int h = 0; h < H; ++h) {
-// 				printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu\n", Cs, x * H + h, y * V + v);
+				size_t block_x = x * H + h;
+				size_t block_y = y * V + v;
+
+				assert(block_x < context->component[Cs].b_x);
+
+				size_t block_seq = block_y * context->component[Cs].b_x + block_x;
+
+// 				printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu out of X=%zu Y=%zu\n", Cs, x * H + h, y * V + v, context->component[Cs].b_x, context->component[Cs].b_y);
+// 				printf("[DEBUG] reading component %" PRIu8 " block# %zu out of %zu\n", Cs, block_seq, context->component[Cs].b_x * context->component[Cs].b_y);
+
+				struct block *block = &context->component[Cs].buffer[block_seq];
 
 				/* read block */
-				err = read_block(bits, context, Cs, &block);
+				err = read_block(bits, context, Cs, block);
 				RETURN_IF(err);
 			}
 		}
