@@ -82,5 +82,7 @@ int init_context(struct context *context)
 	context->m_x = 0;
 	context->m_y = 0;
 
+	context->mblocks = 0;
+
 	return RET_SUCCESS;
 }

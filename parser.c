@@ -248,6 +248,8 @@ int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 // 	assert(Al == 0);
 	printf("Ah = %" PRIu8 " (bit position high), Al = %" PRIu8 " (bit position low)\n", Ah, Al);
 
+	context->mblocks = 0;
+
 	return RET_SUCCESS;
 }
 
@@ -299,18 +301,17 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 
 	init_bits(&bits, stream);
 
-	size_t mblocks = 0;
 	/* loop over macroblocks */
 	do {
-		err = read_macroblock(&bits, context, scan, mblocks);
+		err = read_macroblock(&bits, context, scan, context->mblocks);
 		if (err == RET_FAILURE_NO_MORE_DATA)
 			goto end;
 		RETURN_IF(err);
-		mblocks++;
+		context->mblocks++;
 	} while (1);
 
 end:
-	printf("*** %zu macroblocks ***\n", mblocks);
+	printf("*** %zu macroblocks ***\n", context->mblocks);
 
 	return RET_SUCCESS;
 }

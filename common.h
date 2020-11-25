@@ -133,6 +133,9 @@ struct context {
 
 	/* macroblocks horizontally and vertically */
 	size_t m_x, m_y;
+
+	/* seq. number */
+	size_t mblocks;
 };
 
 int init_qtable(struct qtable *qtable);
