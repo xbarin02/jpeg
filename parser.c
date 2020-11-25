@@ -248,14 +248,20 @@ uint8_t value_to_zerorun(uint8_t value)
 	return value >> 4;
 }
 
-int read_block(struct bits *bits, struct context *context, uint8_t Cs)
+// mask: 2^n - 1
+uint16_t M(uint16_t n)
+{
+	return (1 << n) - 1;
+}
+
+struct coeff_dc {
+	int32_t c;
+};
+
+// read_code + read_extra_bits + compose the coefficient value
+int read_dc(struct bits *bits, struct hcode *hcode_dc, struct coeff_dc *coeff_dc)
 {
 	int err;
-	uint8_t Td = context->component[Cs].Td;
-	uint8_t Ta = context->component[Cs].Ta;
-
-	struct hcode *hcode_dc = &context->hcode[0][Td];
-	struct hcode *hcode_ac = &context->hcode[1][Ta];
 
 	/* cat. code */
 	uint8_t cat;
@@ -269,10 +275,55 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	err = read_extra_bits(bits, cat, &extra);
 	RETURN_IF(err);
 
+	/* two's complement */
+	int32_t c = 0;
+
+	switch (cat) {
+		int sign;
+		case 0:
+			break;
+		default:
+			c = INT32_C(1) << (cat - 1); // base (positive)
+			sign = extra >> (cat - 1); // 0 negative, 1 positive
+			if (sign == 0) {
+				c = -c;
+				c |= (extra + 1) & M(cat); // When DIFF is negative, the SSSS low order bits of (DIFF – 1) are appended.
+			} else {
+				c = +c;
+				c |= (extra    ) & M(cat); // When DIFF is positive, the SSSS low order bits of DIFF are appended.
+			}
+	}
+
+	assert(coeff_dc != NULL);
+
+	coeff_dc->c = c;
+
+	return RET_SUCCESS;
+}
+
+int read_block(struct bits *bits, struct context *context, uint8_t Cs)
+{
+	int err;
+	uint8_t Td = context->component[Cs].Td;
+	uint8_t Ta = context->component[Cs].Ta;
+
+	struct hcode *hcode_dc = &context->hcode[0][Td];
+	struct hcode *hcode_ac = &context->hcode[1][Ta];
+
+	struct coeff_dc coeff_dc;
+
+	/* read DC coefficient */
+	err = read_dc(bits, hcode_dc, &coeff_dc);
+	RETURN_IF(err);
+
 	/* read 63 AC coefficients */
 	/* F.1.2.2 Huffman encoding of AC coefficients */
 	int rem = 63; // remaining
 	do {
+		/* cat. code */
+		uint8_t cat;
+		/* extra bits */
+		uint16_t extra;
 		uint8_t rs;
 		err = read_code(bits, hcode_ac, &rs);
 		RETURN_IF(err);
