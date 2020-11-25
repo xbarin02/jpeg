@@ -278,15 +278,17 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs)
 	err = read_extra_bits(bits, cat, &extra);
 	RETURN_IF(err);
 
-	/* TODO read 63 AC coefficients */
+	/* read 63 AC coefficients */
 	/* F.1.2.2 Huffman encoding of AC coefficients */
 	int rem = 63; // remaining
 	do {
 		uint8_t rs;
 		err = read_code(bits, htable_ac, hcode_ac, &rs);
 		RETURN_IF(err);
-		// TODO: read extra bits
+
 		cat = value_to_category(rs);
+
+		// read extra bits
 		err = read_extra_bits(bits, cat, &extra);
 		RETURN_IF(err);
 
