@@ -267,9 +267,13 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 		uint8_t H = context->component[Cs].H;
 		uint8_t V = context->component[Cs].V;
 
+// 		printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu\n", Cs, x * H, y * V);
+
 		/* for each 8x8 block */
 		for (int v = 0; v < V; ++v) {
 			for (int h = 0; h < H; ++h) {
+// 				printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu\n", Cs, x * H + h, y * V + v);
+
 				/* read block */
 				err = read_block(bits, context, Cs, &block);
 				RETURN_IF(err);
