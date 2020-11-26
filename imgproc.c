@@ -15,14 +15,6 @@ struct frame {
 	float *data;
 };
 
-int frame_create(struct context *context, struct frame *frame);
-
-int frame_to_rgb(struct frame *frame);
-
-int dump_frame(struct frame *frame);
-
-void frame_destroy(struct frame *frame);
-
 int dequantize(struct context *context)
 {
 	assert(context != NULL);
@@ -160,23 +152,6 @@ int clamp(int min, int val, int max)
 	}
 
 	return val;
-}
-
-int dump_image(struct context *context)
-{
-	int err;
-
-	struct frame frame;
-
-	err = frame_create(context, &frame);
-	RETURN_IF(err);
-	err = frame_to_rgb(&frame);
-	RETURN_IF(err);
-	err = dump_frame(&frame);
-	RETURN_IF(err);
-	frame_destroy(&frame);
-
-	return RET_SUCCESS;
 }
 
 int dump_components(struct context *context)
@@ -365,6 +340,23 @@ int dump_frame(struct frame *frame)
 		default:
 			abort();
 	}
+
+	return RET_SUCCESS;
+}
+
+int dump_image(struct context *context)
+{
+	int err;
+
+	struct frame frame;
+
+	err = frame_create(context, &frame);
+	RETURN_IF(err);
+	err = frame_to_rgb(&frame);
+	RETURN_IF(err);
+	err = dump_frame(&frame);
+	RETURN_IF(err);
+	frame_destroy(&frame);
 
 	return RET_SUCCESS;
 }
