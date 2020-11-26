@@ -10,6 +10,8 @@ int dequantize(struct context *context)
 
 	for (int i = 0; i < 256; ++i) {
 		if (context->component[i].buffer != NULL) {
+			printf("Dequantizing component %i...\n", i);
+
 			size_t blocks = context->component[i].b_x * context->component[i].b_y;
 
 			// remove differential DC coding
@@ -30,7 +32,7 @@ int dequantize(struct context *context)
 				struct block *block = &context->component[i].buffer[b];
 
 				for (int j = 0; j < 64; ++j) {
-					block->c[j] *= qtable->element[j];
+					block->c[j] *= (int32_t)qtable->element[j];
 				}
 			}
 		}
