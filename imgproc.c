@@ -122,3 +122,36 @@ int invert_dct(struct context *context)
 
 	return RET_SUCCESS;
 }
+
+/* convert floating-point blocks to frame buffers (for each component) */
+int conv_blocks_to_frame(struct context *context)
+{
+	assert(context != NULL);
+
+	for (int i = 0; i < 256; ++i) {
+		if (context->component[i].frame_buffer != NULL) {
+			printf("converting component %i...\n", i);
+
+			float *buffer = context->component[i].frame_buffer;
+
+			size_t b_x = context->component[i].b_x;
+			size_t b_y = context->component[i].b_y;
+
+			for (size_t y = 0; y < b_y; ++y) {
+				for (size_t x = 0; x < b_x; ++x) {
+					/* copy from... */
+					struct flt_block *flt_block = &context->component[i].flt_buffer[y * b_x + x];
+
+					for (int v = 0; v < 8; ++v) {
+						for (int u = 0; u < 8; ++u) {
+							/* FIXME: not sure about this */
+							buffer[(y + v) * b_x * 8 + (x + u) * 8] = flt_block->c[v][u];
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return RET_SUCCESS;
+}

@@ -152,6 +152,12 @@ int parse_frame_header(FILE *stream, struct context *context)
 			if (context->component[i].flt_buffer == NULL) {
 				return RET_FAILURE_MEMORY_ALLOCATION;
 			}
+
+			context->component[i].frame_buffer = malloc(sizeof(float) * 64 * b_x * b_y);
+
+			if (context->component[i].frame_buffer == NULL) {
+				return RET_FAILURE_MEMORY_ALLOCATION;
+			}
 		}
 	}
 
@@ -475,6 +481,8 @@ int parse_format(FILE *stream, struct context *context)
 				RETURN_IF(err);
 				err = invert_dct(context);
 				RETURN_IF(err);
+				err = conv_blocks_to_frame(context);
+				RETURN_IF(err);
 				return RET_SUCCESS;
 			/* DRI Define restart interval */
 			case 0xffdd:
@@ -511,6 +519,16 @@ int parse_format(FILE *stream, struct context *context)
 	}
 }
 
+void free_buffers(struct context *context)
+{
+	for (int i = 0; i < 256; ++i) {
+		free(context->component[i].int_buffer);
+		free(context->component[i].flt_buffer);
+
+		free(context->component[i].frame_buffer);
+	}
+}
+
 int process_jpeg_stream(FILE *stream)
 {
 	int err;
@@ -530,10 +548,7 @@ int process_jpeg_stream(FILE *stream)
 
 	err = parse_format(stream, context);
 end:
-	for (int i = 0; i < 256; ++i) {
-		free(context->component[i].int_buffer);
-		free(context->component[i].flt_buffer);
-	}
+	free_buffers(context);
 
 	free(context);
 

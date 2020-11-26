@@ -8,4 +8,6 @@ int dequantize(struct context *context);
 
 int invert_dct(struct context *context);
 
+int conv_blocks_to_frame(struct context *context);
+
 #endif

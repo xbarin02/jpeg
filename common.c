@@ -33,6 +33,8 @@ int init_component(struct component *component)
 	component->int_buffer = NULL;
 	component->flt_buffer = NULL;
 
+	component->frame_buffer = NULL;
+
 	return RET_SUCCESS;
 }
 

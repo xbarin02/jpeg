@@ -71,9 +71,14 @@ struct component {
 	/* blocks horizontally and vertically */
 	size_t b_x, b_y;
 
+	/* blocks of 64 integers */
 	struct int_block *int_buffer;
 
+	/* blocks of 64 floats */
 	struct flt_block *flt_buffer;
+
+	/* raster image */
+	float *frame_buffer;
 };
 
 /*
