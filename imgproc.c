@@ -170,6 +170,23 @@ int clamp(int min, int val, int max)
 	return val;
 }
 
+int dump_image(struct context *context)
+{
+	int err;
+
+	struct frame frame;
+
+	err = frame_create(context, &frame);
+	RETURN_IF(err);
+	err = frame_to_rgb(&frame);
+	RETURN_IF(err);
+	err = dump_frame(&frame);
+	RETURN_IF(err);
+	frame_destroy(&frame);
+
+	return RET_SUCCESS;
+}
+
 int dump_components(struct context *context)
 {
 	assert(context != NULL);
@@ -207,13 +224,6 @@ int dump_components(struct context *context)
 			fclose(stream);
 		}
 	}
-
-	/* HACK */
-	struct frame frame;
-	frame_create(context, &frame);
-	frame_to_rgb(&frame);
-	dump_frame(&frame);
-	frame_destroy(&frame);
 
 	return RET_SUCCESS;
 }

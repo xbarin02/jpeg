@@ -520,7 +520,8 @@ int parse_format(FILE *stream, struct context *context)
 				RETURN_IF(err);
 				err = conv_blocks_to_frame(context);
 				RETURN_IF(err);
-				dump_components(context);
+				err = dump_image(context);
+				RETURN_IF(err);
 				return RET_SUCCESS;
 			/* DRI Define restart interval */
 			case 0xffdd:
