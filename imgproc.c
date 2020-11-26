@@ -16,8 +16,11 @@ struct frame {
 };
 
 int frame_create(struct context *context, struct frame *frame);
+
 int frame_to_rgb(struct frame *frame);
+
 int dump_frame(struct frame *frame);
+
 void frame_destroy(struct frame *frame);
 
 int dequantize(struct context *context)
@@ -47,7 +50,7 @@ int dequantize(struct context *context)
 	return RET_SUCCESS;
 }
 
-float C(int u)
+static float C(int u)
 {
 	if (u == 0) {
 		return 1.f / sqrtf(2.f);
@@ -107,16 +110,6 @@ int invert_dct(struct context *context)
 				for (int j = 0; j < 64; ++j) {
 					flt_block->c[j / 8][j % 8] += shift;
 				}
-
-				/* HACK */
-// 				for (int y = 0; y < 8; ++y) {
-// 					for (int x = 0; x < 8; ++x) {
-// 						printf(" %f", flt_block->c[y][x]);
-// // 						printf(" %i", int_block->c[8*y+x]);
-// 					}
-// 					printf("\n");
-// 				}
-// 				printf("\n");
 			}
 		}
 	}
@@ -145,7 +138,6 @@ int conv_blocks_to_frame(struct context *context)
 
 					for (int v = 0; v < 8; ++v) {
 						for (int u = 0; u < 8; ++u) {
-							/* FIXME: not sure about this */
 							buffer[y * b_x * 8 * 8 + v * b_x * 8 + x * 8 + u] = flt_block->c[v][u];
 						}
 					}
@@ -237,6 +229,7 @@ static size_t ceil_div(size_t n, size_t d)
 {
 	return (n + (d - 1)) / d;
 }
+
 int frame_create(struct context *context, struct frame *frame)
 {
 	assert(context != NULL);
@@ -288,7 +281,7 @@ int frame_create(struct context *context, struct frame *frame)
 					// copy patch
 					for (size_t yy = 0; yy < step_y; ++yy) {
 						for (size_t xx = 0; xx < step_x; ++xx) {
-							frame->data[ (step_y*y+yy)*size_x*frame->components + frame->components*(step_x*x+xx) + compno ] = px;
+							frame->data[(step_y*y+yy)*size_x*frame->components + frame->components*(step_x*x+xx) + compno] = px;
 						}
 					}
 				}
@@ -313,9 +306,9 @@ int frame_to_rgb(struct frame *frame)
 					float Cb = frame->data[y*frame->size_x*3 + x*3 + 1];
 					float Cr = frame->data[y*frame->size_x*3 + x*3 + 2];
 
-					float R = Y + 1.402*(Cr-128);
-					float G = Y - 0.34414*(Cb-128) - 0.71414*(Cr-128);
-					float B = Y + 1.772*(Cb-128);
+					float R = Y + 1.402 * (Cr - 128);
+					float G = Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128);
+					float B = Y + 1.772 * (Cb - 128);
 
 					frame->data[y*frame->size_x*3 + x*3 + 0] = R;
 					frame->data[y*frame->size_x*3 + x*3 + 1] = G;
