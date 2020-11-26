@@ -46,6 +46,8 @@ int32_t decode_coeff(uint8_t cat, uint16_t extra)
 			if (sign == 0) {
 				c = -c;
 				c |= (extra + 1) & M(cat);
+				/* HACK... why the above does not work? why the below does work? */
+				c = ((-1) << cat) + 1 + extra;
 			} else {
 				c = +c;
 				c |= (extra    ) & M(cat);
