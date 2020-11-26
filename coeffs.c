@@ -28,6 +28,9 @@ uint16_t M(uint16_t n)
 	return (1 << n) - 1;
 }
 
+/*
+ * Figure F.12 – Extending the sign bit of a decoded value in V
+ */
 int32_t decode_coeff(uint8_t cat, uint16_t extra)
 {
 	/* two's complement */
