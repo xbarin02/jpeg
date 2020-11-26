@@ -3,8 +3,21 @@
 #include <stdint.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "imgproc.h"
 #include "coeffs.h"
+
+struct frame {
+	uint8_t components;
+	uint16_t Y, X;
+	size_t size_x, size_y;
+
+	float *data;
+};
+
+int frame_create(struct context *context, struct frame *frame);
+int frame_to_rgb(struct frame *frame);
+int dump_frame(struct frame *frame);
 
 int dequantize(struct context *context)
 {
@@ -192,6 +205,142 @@ int dump_components(struct context *context)
 
 			fclose(stream);
 		}
+	}
+
+	/* HACK */
+	struct frame frame;
+	frame_create(context, &frame);
+	frame_to_rgb(&frame);
+	dump_frame(&frame);
+
+	return RET_SUCCESS;
+}
+
+static size_t ceil_div(size_t n, size_t d)
+{
+	return (n + (d - 1)) / d;
+}
+int frame_create(struct context *context, struct frame *frame)
+{
+	assert(context != NULL);
+	assert(frame != NULL);
+
+	frame->components = context->components;
+	frame->Y = context->Y;
+	frame->X = context->X;
+
+	size_t size_x = ceil_div(frame->X, 8 * context->max_H) * 8 * context->max_H;
+	size_t size_y = ceil_div(frame->Y, 8 * context->max_V) * 8 * context->max_V;
+
+	frame->size_x = size_x;
+	frame->size_y = size_y;
+
+	printf("[DEBUG] frame %i X=%zu Y=%zu\n", (int)frame->components, size_x, size_y);
+
+	// alloc frame->data[]
+	frame->data = malloc(sizeof(float) * frame->components * size_x * size_y);
+
+	if (frame->data == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	// component id
+	int compno = 0;
+
+	for (int i = 0; i < 256; ++i) {
+		if (context->component[i].frame_buffer != NULL) {
+			size_t b_x = context->component[i].b_x;
+			size_t b_y = context->component[i].b_y;
+
+			size_t c_x = b_x * 8;
+			size_t c_y = b_y * 8;
+
+			size_t step_x = size_x / c_x;
+			size_t step_y = size_y / c_y;
+
+			float *buffer = context->component[i].frame_buffer;
+
+			// iterate over component raster (smaller than frame raster)
+			for (size_t y = 0; y < c_y; ++y) {
+				for (size_t x = 0; x < c_x; ++x) {
+					// (i,y,x) to index component
+					// (compno,step*y,step*x) to index frame
+
+					float px = buffer[y * c_x + x];
+
+					// copy patch
+					for (size_t yy = 0; yy < step_y; ++yy) {
+						for (size_t xx = 0; xx < step_x; ++xx) {
+							frame->data[ (step_y*y+yy)*size_x*frame->components + frame->components*(step_x*x+xx) + compno ] = px;
+						}
+					}
+				}
+			}
+
+			compno++;
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+int frame_to_rgb(struct frame *frame)
+{
+	assert(frame != NULL);
+
+	switch (frame->components) {
+		case 3:
+			for (size_t y = 0; y < frame->Y; ++y) {
+				for (size_t x = 0; x < frame->X; ++x) {
+					float Y  = frame->data[y*frame->size_x*3 + x*3 + 0];
+					float Cb = frame->data[y*frame->size_x*3 + x*3 + 1];
+					float Cr = frame->data[y*frame->size_x*3 + x*3 + 2];
+
+					float R = Y + 1.402*(Cr-128);
+					float G = Y - 0.34414*(Cb-128) - 0.71414*(Cr-128);
+					float B = Y + 1.772*(Cb-128);
+
+					frame->data[y*frame->size_x*3 + x*3 + 0] = R;
+					frame->data[y*frame->size_x*3 + x*3 + 1] = G;
+					frame->data[y*frame->size_x*3 + x*3 + 2] = B;
+				}
+			}
+			break;
+		case 1:
+			/* nothing to do */
+			break;
+		default:
+			abort();
+	}
+
+	return RET_SUCCESS;
+}
+
+int dump_frame(struct frame *frame)
+{
+	assert(frame != NULL);
+
+	switch (frame->components) {
+		FILE *stream;
+		case 3:
+			stream = fopen("frame.ppm", "w");
+			if (stream == NULL) {
+				return RET_FAILURE_FILE_OPEN;
+			}
+			fprintf(stream, "P3\n%zu %zu\n255\n", (size_t)frame->X, (size_t)frame->Y);
+			for (size_t y = 0; y < frame->Y; ++y) {
+				for (size_t x = 0; x < frame->X; ++x) {
+					for (int c = 0; c < 3; ++c) {
+						fprintf(stream, "%i ", clamp(0, (int)frame->data[y*frame->size_x*3 + x*3 + c], 255));
+					}
+				}
+				fprintf(stream, "\n");
+			}
+			fclose(stream);
+			break;
+		default:
+			/* TODO: handle grayscale image */
+			abort();
 	}
 
 	return RET_SUCCESS;

@@ -62,7 +62,7 @@ int parse_qtable(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
-size_t ceil_div(size_t n, size_t d)
+static size_t ceil_div(size_t n, size_t d)
 {
 	return (n + (d - 1)) / d;
 }
@@ -122,6 +122,9 @@ int parse_frame_header(FILE *stream, struct context *context)
 		max_H = (H > max_H) ? H : max_H;
 		max_V = (V > max_V) ? V : max_V;
 	}
+
+	context->max_H = max_H;
+	context->max_V = max_V;
 
 	context->m_x = ceil_div(X, 8 * max_H);
 	context->m_y = ceil_div(Y, 8 * max_V);

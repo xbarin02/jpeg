@@ -143,6 +143,8 @@ struct context {
 
 	/* seq. number */
 	size_t mblocks;
+
+	uint8_t max_H, max_V;
 };
 
 int init_qtable(struct qtable *qtable);
