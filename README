@@ -6,3 +6,13 @@ Minimalistic JPEG decoder
 - can handle restart markers
 - does not support progressive JPEG files
 - does not support arithmetic coding
+
+Author
+======
+
+* David Barina <ibarina@fit.vutbr.cz>
+
+License
+=======
+
+This project is licensed under the MIT License.
