@@ -145,7 +145,7 @@ int conv_blocks_to_frame(struct context *context)
 					for (int v = 0; v < 8; ++v) {
 						for (int u = 0; u < 8; ++u) {
 							/* FIXME: not sure about this */
-							buffer[(y + v) * b_x * 8 + (x + u) * 8] = flt_block->c[v][u];
+							buffer[y * b_x * 8 + v * b_x + x * 8 + u] = flt_block->c[v][u];
 						}
 					}
 				}
