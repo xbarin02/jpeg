@@ -18,6 +18,7 @@ struct frame {
 int frame_create(struct context *context, struct frame *frame);
 int frame_to_rgb(struct frame *frame);
 int dump_frame(struct frame *frame);
+void frame_destroy(struct frame *frame);
 
 int dequantize(struct context *context)
 {
@@ -212,8 +213,14 @@ int dump_components(struct context *context)
 	frame_create(context, &frame);
 	frame_to_rgb(&frame);
 	dump_frame(&frame);
+	frame_destroy(&frame);
 
 	return RET_SUCCESS;
+}
+
+void frame_destroy(struct frame *frame)
+{
+	free(frame->data);
 }
 
 static size_t ceil_div(size_t n, size_t d)
