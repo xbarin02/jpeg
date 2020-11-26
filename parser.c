@@ -467,6 +467,8 @@ int parse_format(FILE *stream, struct context *context)
 				printf("EOI\n");
 				err = dequantize(context);
 				RETURN_IF(err);
+				err = invert_dct(context);
+				RETURN_IF(err);
 				return RET_SUCCESS;
 			/* DRI Define restart interval */
 			case 0xffdd:

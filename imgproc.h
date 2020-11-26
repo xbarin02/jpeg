@@ -6,4 +6,6 @@
 /* for each component: remove differential DC encoding & quantization */
 int dequantize(struct context *context);
 
+int invert_dct(struct context *context);
+
 #endif

@@ -1,6 +1,6 @@
 CFLAGS+=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_XOPEN_SOURCE -D_GNU_SOURCE
 LDFLAGS+=
-LDLIBS+=
+LDLIBS+=-lm
 BINS=parser
 
 CFLAGS+=$(EXTRA_CFLAGS)
