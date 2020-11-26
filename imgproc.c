@@ -26,7 +26,6 @@ int dequantize(struct context *context)
 
 				int32_t pred = prev_block->c[0];
 
-				// FIXME what is wrong?
 				this_block->c[0] += pred;
 			}
 
