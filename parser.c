@@ -10,6 +10,7 @@
 #include "huffman.h"
 #include "bits.h"
 #include "coeffs.h"
+#include "imgproc.h"
 
 const char *Pq_to_str[] = {
 	[0] = "8-bit",
@@ -464,6 +465,8 @@ int parse_format(FILE *stream, struct context *context)
 			/* EOI* End of image */
 			case 0xffd9:
 				printf("EOI\n");
+				err = dequantize(context);
+				RETURN_IF(err);
 				return RET_SUCCESS;
 			/* DRI Define restart interval */
 			case 0xffdd:
@@ -548,7 +551,13 @@ int main(int argc, char *argv[])
 {
 	const char *path = argc > 1 ? argv[1] : "Car3.jpg";
 
-	process_jpeg_file(path);
+	int err = process_jpeg_file(path);
+
+	if (err) {
+		return 1;
+	}
+
+	printf("Success.\n");
 
 	return 0;
 }
