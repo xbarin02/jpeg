@@ -157,6 +157,19 @@ int conv_blocks_to_frame(struct context *context)
 	return RET_SUCCESS;
 }
 
+int clamp(int min, int val, int max)
+{
+	if (val < min) {
+		return min;
+	}
+
+	if (val > max) {
+		return max;
+	}
+
+	return val;
+}
+
 int dump_components(struct context *context)
 {
 	assert(context != NULL);
@@ -186,7 +199,7 @@ int dump_components(struct context *context)
 
 			for (size_t y = 0; y < size_y; ++y) {
 				for (size_t x = 0; x < size_x; ++x) {
-					fprintf(stream, "%i ", (int)buffer[y * size_x + x]);
+					fprintf(stream, "%i ", clamp(0, (int)buffer[y * size_x + x], 255));
 				}
 				fprintf(stream, "\n");
 			}
