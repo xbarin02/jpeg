@@ -106,10 +106,12 @@ int invert_dct(struct context *context)
 				uint8_t P = context->precision;
 				int shift = 1 << (P - 1);
 
+				assert(shift == 128);
+
 				// level shift
-// 				for (int j = 0; j < 64; ++j) {
-// 					fb.c[j / 8][j % 8] += shift;
-// 				}
+				for (int j = 0; j < 64; ++j) {
+					fb.c[j / 8][j % 8] += shift;
+				}
 
 				/* HACK */
 // 				for (int y = 0; y < 8; ++y) {
