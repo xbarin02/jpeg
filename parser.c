@@ -146,6 +146,12 @@ int parse_frame_header(FILE *stream, struct context *context)
 			if (context->component[i].buffer == NULL) {
 				return RET_FAILURE_MEMORY_ALLOCATION;
 			}
+
+			context->component[i].flt_buffer = malloc(sizeof(struct flt_block) * b_x * b_y);
+
+			if (context->component[i].flt_buffer == NULL) {
+				return RET_FAILURE_MEMORY_ALLOCATION;
+			}
 		}
 	}
 
@@ -526,6 +532,7 @@ int process_jpeg_stream(FILE *stream)
 end:
 	for (int i = 0; i < 256; ++i) {
 		free(context->component[i].buffer);
+		free(context->component[i].flt_buffer);
 	}
 
 	free(context);

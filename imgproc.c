@@ -46,10 +46,6 @@ int dequantize(struct context *context)
 	return RET_SUCCESS;
 }
 
-struct flt_block {
-	float c[8][8];
-};
-
 float C(int u)
 {
 	if (u == 0) {
@@ -93,14 +89,13 @@ int invert_dct(struct context *context)
 			for (size_t b = 0; b < blocks; ++b) {
 				struct block *block = &context->component[i].buffer[b];
 
-				/* HACK */
-				struct flt_block fb;
+				struct flt_block *fb = &context->component[i].flt_buffer[b];
 
 				for (int j = 0; j < 64; ++j) {
-					fb.c[j / 8][j % 8] = (float)block->c[j];
+					fb->c[j / 8][j % 8] = (float)block->c[j];
 				}
 
-				idct(&fb);
+				idct(fb);
 
 				uint8_t P = context->precision;
 				int shift = 1 << (P - 1);
@@ -109,13 +104,13 @@ int invert_dct(struct context *context)
 
 				// level shift
 				for (int j = 0; j < 64; ++j) {
-					fb.c[j / 8][j % 8] += shift;
+					fb->c[j / 8][j % 8] += shift;
 				}
 
 				/* HACK */
 // 				for (int y = 0; y < 8; ++y) {
 // 					for (int x = 0; x < 8; ++x) {
-// 						printf(" %f", fb.c[y][x]);
+// 						printf(" %f", fb->c[y][x]);
 // // 						printf(" %i", block->c[8*y+x]);
 // 					}
 // 					printf("\n");

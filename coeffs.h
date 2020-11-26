@@ -5,10 +5,16 @@
 #include "common.h"
 #include "bits.h"
 
+/* useful for quantized coefficients */
 struct block {
 	int32_t c[64];
 };
 
 int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct block *block);
+
+/* useful for floating-point DCT */
+struct flt_block {
+	float c[8][8];
+};
 
 #endif

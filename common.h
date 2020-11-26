@@ -72,6 +72,8 @@ struct component {
 	size_t b_x, b_y;
 
 	struct block *buffer;
+
+	struct flt_block *flt_buffer;
 };
 
 /*

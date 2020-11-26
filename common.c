@@ -31,6 +31,7 @@ int init_component(struct component *component)
 	component->b_y = 0;
 
 	component->buffer = NULL;
+	component->flt_buffer = NULL;
 
 	return RET_SUCCESS;
 }
