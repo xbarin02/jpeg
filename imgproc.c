@@ -7,14 +7,6 @@
 #include "imgproc.h"
 #include "coeffs.h"
 
-struct frame {
-	uint8_t components;
-	uint16_t Y, X;
-	size_t size_x, size_y;
-
-	float *data;
-};
-
 int dequantize(struct context *context)
 {
 	assert(context != NULL);
@@ -195,6 +187,14 @@ int dump_components(struct context *context)
 	return RET_SUCCESS;
 }
 
+struct frame {
+	uint8_t components;
+	uint16_t Y, X;
+	size_t size_x, size_y;
+
+	float *data;
+};
+
 void frame_destroy(struct frame *frame)
 {
 	free(frame->data);
@@ -256,7 +256,7 @@ int frame_create(struct context *context, struct frame *frame)
 					// copy patch
 					for (size_t yy = 0; yy < step_y; ++yy) {
 						for (size_t xx = 0; xx < step_x; ++xx) {
-							frame->data[(step_y*y+yy)*size_x*frame->components + frame->components*(step_x*x+xx) + compno] = px;
+							frame->data[(step_y * y + yy) * size_x * frame->components + frame->components * (step_x * x + xx) + compno] = px;
 						}
 					}
 				}
@@ -277,17 +277,17 @@ int frame_to_rgb(struct frame *frame)
 		case 3:
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
-					float Y  = frame->data[y*frame->size_x*3 + x*3 + 0];
-					float Cb = frame->data[y*frame->size_x*3 + x*3 + 1];
-					float Cr = frame->data[y*frame->size_x*3 + x*3 + 2];
+					float Y  = frame->data[y * frame->size_x * 3 + x * 3 + 0];
+					float Cb = frame->data[y * frame->size_x * 3 + x * 3 + 1];
+					float Cr = frame->data[y * frame->size_x * 3 + x * 3 + 2];
 
 					float R = Y + 1.402 * (Cr - 128);
 					float G = Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128);
 					float B = Y + 1.772 * (Cb - 128);
 
-					frame->data[y*frame->size_x*3 + x*3 + 0] = R;
-					frame->data[y*frame->size_x*3 + x*3 + 1] = G;
-					frame->data[y*frame->size_x*3 + x*3 + 2] = B;
+					frame->data[y * frame->size_x * 3 + x * 3 + 0] = R;
+					frame->data[y * frame->size_x * 3 + x * 3 + 1] = G;
+					frame->data[y * frame->size_x * 3 + x * 3 + 2] = B;
 				}
 			}
 			break;
@@ -316,7 +316,7 @@ int dump_frame(struct frame *frame)
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
-						fprintf(stream, "%i ", clamp(0, (int)frame->data[y*frame->size_x*3 + x*3 + c], 255));
+						fprintf(stream, "%i ", clamp(0, (int)frame->data[y * frame->size_x * 3 + x * 3 + c], 255));
 					}
 				}
 				fprintf(stream, "\n");
@@ -331,7 +331,7 @@ int dump_frame(struct frame *frame)
 			fprintf(stream, "P2\n%zu %zu\n255\n", (size_t)frame->X, (size_t)frame->Y);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
-					fprintf(stream, "%i ", clamp(0, (int)frame->data[y*frame->size_x + x], 255));
+					fprintf(stream, "%i ", clamp(0, (int)frame->data[y * frame->size_x + x], 255));
 				}
 				fprintf(stream, "\n");
 			}
