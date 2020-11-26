@@ -27,7 +27,7 @@ int dequantize(struct context *context)
 
 				int32_t pred = prev_block->c[0];
 
-				this_block->c[0] += pred;
+// 				this_block->c[0] += pred;
 			}
 
 			uint8_t Tq = context->component[i].Tq;

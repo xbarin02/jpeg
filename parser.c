@@ -209,6 +209,8 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 struct scan {
 	uint8_t Ns;
 	uint8_t Cs[256];
+
+	struct int_block *last_block[256];
 };
 
 int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
@@ -307,6 +309,12 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 				/* read block */
 				err = read_block(bits, context, Cs, int_block);
 				RETURN_IF(err);
+
+				if (scan->last_block[Cs] != NULL) {
+					int_block->c[0] += scan->last_block[Cs]->c[0];
+				}
+
+				scan->last_block[Cs] = int_block;
 			}
 		}
 	}
@@ -322,6 +330,10 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 	struct bits bits;
 
 	init_bits(&bits, stream);
+
+	for (int i = 0; i < 256; ++i) {
+		scan->last_block[i] = NULL;
+	}
 
 	/* loop over macroblocks */
 	do {
