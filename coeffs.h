@@ -6,11 +6,11 @@
 #include "bits.h"
 
 /* useful for quantized coefficients */
-struct block {
+struct int_block {
 	int32_t c[64];
 };
 
-int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct block *block);
+int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct int_block *int_block);
 
 /* useful for floating-point DCT */
 struct flt_block {

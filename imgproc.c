@@ -14,15 +14,15 @@ int dequantize(struct context *context)
 	assert(context != NULL);
 
 	for (int i = 0; i < 256; ++i) {
-		if (context->component[i].buffer != NULL) {
+		if (context->component[i].int_buffer != NULL) {
 			printf("Dequantizing component %i...\n", i);
 
 			size_t blocks = context->component[i].b_x * context->component[i].b_y;
 
 			// remove differential DC coding
 			for (size_t b = 1; b < blocks; ++b) {
-				struct block *prev_block = &context->component[i].buffer[b - 1];
-				struct block *this_block = &context->component[i].buffer[b];
+				struct int_block *prev_block = &context->component[i].int_buffer[b - 1];
+				struct int_block *this_block = &context->component[i].int_buffer[b];
 
 				int32_t pred = prev_block->c[0];
 
@@ -34,10 +34,10 @@ int dequantize(struct context *context)
 
 			// for each block, for each coefficient, c[] *= Q[]
 			for (size_t b = 0; b < blocks; ++b) {
-				struct block *block = &context->component[i].buffer[b];
+				struct int_block *int_block = &context->component[i].int_buffer[b];
 
 				for (int j = 0; j < 64; ++j) {
-					block->c[j] *= (int32_t)qtable->element[j];
+					int_block->c[j] *= (int32_t)qtable->element[j];
 				}
 			}
 		}
@@ -55,14 +55,14 @@ float C(int u)
 	return 1.f;
 }
 
-void idct(struct flt_block *fb)
+void idct(struct flt_block *flt_block)
 {
 	/* clone input into S */
-	struct flt_block S = *fb;
+	struct flt_block S = *flt_block;
 
 	for (int y = 0; y < 8; ++y) {
 		for (int x = 0; x < 8; ++x) {
-			float *s = &fb->c[y][x];
+			float *s = &flt_block->c[y][x];
 
 			*s = 0.f;
 
@@ -81,21 +81,21 @@ int invert_dct(struct context *context)
 	assert(context != NULL);
 
 	for (int i = 0; i < 256; ++i) {
-		if (context->component[i].buffer != NULL) {
+		if (context->component[i].int_buffer != NULL) {
 			printf("IDCT on component %i...\n", i);
 
 			size_t blocks = context->component[i].b_x * context->component[i].b_y;
 
 			for (size_t b = 0; b < blocks; ++b) {
-				struct block *block = &context->component[i].buffer[b];
+				struct int_block *int_block = &context->component[i].int_buffer[b];
 
-				struct flt_block *fb = &context->component[i].flt_buffer[b];
+				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
 
 				for (int j = 0; j < 64; ++j) {
-					fb->c[j / 8][j % 8] = (float)block->c[j];
+					flt_block->c[j / 8][j % 8] = (float)int_block->c[j];
 				}
 
-				idct(fb);
+				idct(flt_block);
 
 				uint8_t P = context->precision;
 				int shift = 1 << (P - 1);
@@ -104,14 +104,14 @@ int invert_dct(struct context *context)
 
 				// level shift
 				for (int j = 0; j < 64; ++j) {
-					fb->c[j / 8][j % 8] += shift;
+					flt_block->c[j / 8][j % 8] += shift;
 				}
 
 				/* HACK */
 // 				for (int y = 0; y < 8; ++y) {
 // 					for (int x = 0; x < 8; ++x) {
-// 						printf(" %f", fb->c[y][x]);
-// // 						printf(" %i", block->c[8*y+x]);
+// 						printf(" %f", flt_block->c[y][x]);
+// // 						printf(" %i", int_block->c[8*y+x]);
 // 					}
 // 					printf("\n");
 // 				}

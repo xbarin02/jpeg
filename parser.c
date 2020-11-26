@@ -141,9 +141,9 @@ int parse_frame_header(FILE *stream, struct context *context)
 
 			printf("[DEBUG] C = %i: %zu blocks (x=%zu y=%zu)\n", i, b_x * b_y, b_x, b_y);
 
-			context->component[i].buffer = malloc(sizeof(struct block) * b_x * b_y);
+			context->component[i].int_buffer = malloc(sizeof(struct int_block) * b_x * b_y);
 
-			if (context->component[i].buffer == NULL) {
+			if (context->component[i].int_buffer == NULL) {
 				return RET_FAILURE_MEMORY_ALLOCATION;
 			}
 
@@ -296,10 +296,10 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 // 				printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu out of X=%zu Y=%zu\n", Cs, x * H + h, y * V + v, context->component[Cs].b_x, context->component[Cs].b_y);
 // 				printf("[DEBUG] reading component %" PRIu8 " block# %zu out of %zu\n", Cs, block_seq, context->component[Cs].b_x * context->component[Cs].b_y);
 
-				struct block *block = &context->component[Cs].buffer[block_seq];
+				struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
 
 				/* read block */
-				err = read_block(bits, context, Cs, block);
+				err = read_block(bits, context, Cs, int_block);
 				RETURN_IF(err);
 			}
 		}
@@ -531,7 +531,7 @@ int process_jpeg_stream(FILE *stream)
 	err = parse_format(stream, context);
 end:
 	for (int i = 0; i < 256; ++i) {
-		free(context->component[i].buffer);
+		free(context->component[i].int_buffer);
 		free(context->component[i].flt_buffer);
 	}
 

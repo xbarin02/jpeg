@@ -110,7 +110,7 @@ int read_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_ac
 	return RET_SUCCESS;
 }
 
-int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct block *block)
+int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct int_block *int_block)
 {
 	int err;
 	uint8_t Td = context->component[Cs].Td;
@@ -125,13 +125,13 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct bl
 	err = read_dc(bits, hcode_dc, &coeff_dc);
 	RETURN_IF(err);
 
-	assert(block != NULL);
+	assert(int_block != NULL);
 
-	block->c[zigzag[0]] = coeff_dc.c;
+	int_block->c[zigzag[0]] = coeff_dc.c;
 
 	// reset all remaining 63 coefficients to zero
 	for (int i = 1; i < 64; ++i) {
-		block->c[zigzag[i]] = 0;
+		int_block->c[zigzag[i]] = 0;
 	}
 
 	int i = 1; // AC coefficient pointer
@@ -152,7 +152,7 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct bl
 
 		// zero run + one AC coeff.
 		i += coeff_ac.zrl;
-		block->c[zigzag[i]] = coeff_ac.c;
+		int_block->c[zigzag[i]] = coeff_ac.c;
 		i++;
 
 		rem -= coeff_ac.zrl + 1;

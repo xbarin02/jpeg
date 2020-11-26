@@ -71,7 +71,7 @@ struct component {
 	/* blocks horizontally and vertically */
 	size_t b_x, b_y;
 
-	struct block *buffer;
+	struct int_block *int_buffer;
 
 	struct flt_block *flt_buffer;
 };
