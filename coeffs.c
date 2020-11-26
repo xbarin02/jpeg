@@ -22,39 +22,27 @@ uint8_t value_to_zerorun(uint8_t value)
 	return value >> 4;
 }
 
-// mask: 2^n - 1
-uint16_t M(uint16_t n)
-{
-	return (1 << n) - 1;
-}
-
 /*
  * Figure F.12 – Extending the sign bit of a decoded value in V
  */
 int32_t decode_coeff(uint8_t cat, uint16_t extra)
 {
-	/* two's complement */
-	int32_t c = 0;
-
 	switch (cat) {
 		int sign;
 		case 0:
-			break;
+			return 0;
 		default:
-			c = INT32_C(1) << (cat - 1); // base (positive)
-			sign = extra >> (cat - 1); // 0 negative, 1 positive
+			// 0 negative, 1 positive
+			sign = extra >> (cat - 1);
 			if (sign == 0) {
-				c = -c;
-				c |= (extra + 1) & M(cat);
-				/* HACK... why the above does not work? why the below does work? */
-				c = ((-1) << cat) + 1 + extra;
+// 				assert(-(INT32_C(1) << cat) + extra + 1 == ((-1) << cat) + 1 + extra);
+// 				return ((-1) << cat) + 1 + extra;
+				return -(INT32_C(1) << cat) + extra + 1;
 			} else {
-				c = +c;
-				c |= (extra    ) & M(cat);
+// 				assert(((INT32_C(1) << (cat - 1)) | (extra & M(cat))) == extra);
+				return extra;
 			}
 	}
-
-	return c;
 }
 
 // read_code + read_extra_bits + compose the coefficient value
