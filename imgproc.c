@@ -27,7 +27,7 @@ int dequantize(struct context *context)
 				int32_t pred = prev_block->c[0];
 
 				// FIXME what is wrong?
-// 				this_block->c[0] += pred;
+				this_block->c[0] += pred;
 			}
 
 			uint8_t Tq = context->component[i].Tq;
@@ -116,8 +116,8 @@ int invert_dct(struct context *context)
 				/* HACK */
 // 				for (int y = 0; y < 8; ++y) {
 // 					for (int x = 0; x < 8; ++x) {
-// // 						printf(" %f", fb.c[y][x]);
-// 						printf(" %i", block->c[8*y+x]);
+// 						printf(" %f", fb.c[y][x]);
+// // 						printf(" %i", block->c[8*y+x]);
 // 					}
 // 					printf("\n");
 // 				}
