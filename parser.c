@@ -468,6 +468,15 @@ int parse_format(FILE *stream, struct context *context)
 				RETURN_IF(err);
 				fprintf(stderr, "Progressive DCT not supported!\n");
 				return RET_FAILURE_FILE_UNSUPPORTED;
+			/* SOF9 Extended sequential DCT (arithmetic coding) */
+			case 0xffc9:
+				printf("SOF9\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = parse_frame_header(stream, context);
+				RETURN_IF(err);
+				fprintf(stderr, "Arithmetic coding not supported!\n");
+				return RET_FAILURE_FILE_UNSUPPORTED;
 			/* DHT Define Huffman table(s) */
 			case 0xffc4:
 				printf("DHT\n");
