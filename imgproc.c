@@ -73,10 +73,9 @@ void idct(struct flt_block *fb)
 
 			for (int u = 0; u < 8; ++u) {
 				for (int v = 0; v < 8; ++v) {
-					*s = C(u) * C(v) * S.c[v][u] * cosf((2*x+1)*u*M_PI/16) * cosf((2*y+1)*v*M_PI/16);
+					*s += C(u) * C(v) * S.c[v][u] * cosf((2*x+1)*u*M_PI/16) * cosf((2*y+1)*v*M_PI/16);
 				}
 			}
-
 			*s *= 0.25f;
 		}
 	}
@@ -102,7 +101,7 @@ int invert_dct(struct context *context)
 					fb.c[j / 8][j % 8] = (float)block->c[j];
 				}
 
-// 				idct(&fb);
+				idct(&fb);
 
 				uint8_t P = context->precision;
 				int shift = 1 << (P - 1);
