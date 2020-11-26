@@ -338,7 +338,7 @@ int dump_frame(struct frame *frame)
 			}
 			fclose(stream);
 			break;
-		default:
+		case 1:
 			stream = fopen("frame.pgm", "w");
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
@@ -352,6 +352,8 @@ int dump_frame(struct frame *frame)
 			}
 			fclose(stream);
 			break;
+		default:
+			abort();
 	}
 
 	return RET_SUCCESS;
