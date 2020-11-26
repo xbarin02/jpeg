@@ -98,6 +98,14 @@ int invert_dct(struct context *context)
 				}
 
 				idct(&fb);
+
+				uint8_t P = context->precision;
+				int shift = 1 << (P - 1);
+
+				// level shift
+				for (int j = 0; j < 64; ++j) {
+					fb.c[j / 8][j % 8] += shift;
+				}
 			}
 		}
 	}
