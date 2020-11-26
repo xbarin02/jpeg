@@ -5,6 +5,10 @@
 #include "imgproc.h"
 #include "coeffs.h"
 
+/* FIXME
+ * At the beginning of the scan and at the beginning of each restart interval, the prediction for the DC coefficient prediction
+ * is initialized to 0. */
+
 int dequantize(struct context *context)
 {
 	assert(context != NULL);
@@ -22,7 +26,8 @@ int dequantize(struct context *context)
 
 				int32_t pred = prev_block->c[0];
 
-				this_block->c[0] += pred;
+				// FIXME what is wrong?
+// 				this_block->c[0] += pred;
 			}
 
 			uint8_t Tq = context->component[i].Tq;
@@ -97,15 +102,25 @@ int invert_dct(struct context *context)
 					fb.c[j / 8][j % 8] = (float)block->c[j];
 				}
 
-				idct(&fb);
+// 				idct(&fb);
 
 				uint8_t P = context->precision;
 				int shift = 1 << (P - 1);
 
 				// level shift
-				for (int j = 0; j < 64; ++j) {
-					fb.c[j / 8][j % 8] += shift;
-				}
+// 				for (int j = 0; j < 64; ++j) {
+// 					fb.c[j / 8][j % 8] += shift;
+// 				}
+
+				/* HACK */
+// 				for (int y = 0; y < 8; ++y) {
+// 					for (int x = 0; x < 8; ++x) {
+// // 						printf(" %f", fb.c[y][x]);
+// 						printf(" %i", block->c[8*y+x]);
+// 					}
+// 					printf("\n");
+// 				}
+// 				printf("\n");
 			}
 		}
 	}
