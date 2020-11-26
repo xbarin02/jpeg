@@ -160,6 +160,7 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct bl
 		// zero run + one AC coeff.
 		i += coeff_ac.zrl;
 		block->c[zigzag[i]] = coeff_ac.c;
+		i++;
 
 		rem -= coeff_ac.zrl + 1;
 	} while (rem > 0);
