@@ -6,10 +6,6 @@
 #include "imgproc.h"
 #include "coeffs.h"
 
-/* FIXME
- * At the beginning of the scan and at the beginning of each restart interval, the prediction for the DC coefficient prediction
- * is initialized to 0. */
-
 int dequantize(struct context *context)
 {
 	assert(context != NULL);
@@ -19,16 +15,6 @@ int dequantize(struct context *context)
 			printf("Dequantizing component %i...\n", i);
 
 			size_t blocks = context->component[i].b_x * context->component[i].b_y;
-
-			// remove differential DC coding
-			for (size_t b = 1; b < blocks; ++b) {
-				struct int_block *prev_block = &context->component[i].int_buffer[b - 1];
-				struct int_block *this_block = &context->component[i].int_buffer[b];
-
-				int32_t pred = prev_block->c[0];
-
-// 				this_block->c[0] += pred;
-			}
 
 			uint8_t Tq = context->component[i].Tq;
 			struct qtable *qtable = &context->qtable[Tq];

@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-/* for each component: remove differential DC encoding & quantization */
+/* for each component: remove quantization */
 int dequantize(struct context *context);
 
 int invert_dct(struct context *context);

@@ -210,6 +210,10 @@ struct scan {
 	uint8_t Ns;
 	uint8_t Cs[256];
 
+	/* useful to remove differential DC coding
+	 *
+	 * At the beginning of the scan and at the beginning of each restart interval, the prediction for the DC coefficient prediction
+	 * is initialized to 0. */
 	struct int_block *last_block[256];
 };
 
