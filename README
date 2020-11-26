@@ -1,0 +1,8 @@
+Minimalistic JPEG decoder
+=========================
+
+- can parse YCbCr and grayscale images
+- can handle subsampled components
+- can handle restart markers
+- does not support progressive JPEG files
+- does not support arithmetic coding
