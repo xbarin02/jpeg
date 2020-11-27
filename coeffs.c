@@ -35,11 +35,8 @@ int32_t decode_coeff(uint8_t cat, uint16_t extra)
 			// 0 negative, 1 positive
 			sign = extra >> (cat - 1);
 			if (sign == 0) {
-// 				assert(-(INT32_C(1) << cat) + extra + 1 == ((-1) << cat) + 1 + extra);
-// 				return ((-1) << cat) + 1 + extra;
 				return -(INT32_C(1) << cat) + extra + 1;
 			} else {
-// 				assert(((INT32_C(1) << (cat - 1)) | (extra & M(cat))) == extra);
 				return extra;
 			}
 	}
