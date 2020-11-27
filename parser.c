@@ -446,6 +446,14 @@ int parse_format(FILE *stream, struct context *context)
 				err = skip_segment(stream, len);
 				RETURN_IF(err);
 				break;
+			/* APP14 */
+			case 0xffee:
+				printf("APP14\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
 			/* DQT Define quantization table(s) */
 			case 0xffdb:
 				printf("DQT\n");
