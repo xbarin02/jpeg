@@ -10,8 +10,6 @@ int invert_dct(struct context *context);
 
 int conv_blocks_to_frame(struct context *context);
 
-int dump_components(struct context *context);
-
 int dump_image(struct context *context);
 
 #endif

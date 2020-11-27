@@ -168,47 +168,6 @@ int clamp(int min, int val, int max)
 	return val;
 }
 
-int dump_components(struct context *context)
-{
-	assert(context != NULL);
-
-	for (int i = 0; i < 256; ++i) {
-		if (context->component[i].frame_buffer != NULL) {
-			printf("store component %i...\n", i);
-
-			char path[4096];
-			sprintf(path, "comp%i.pgm", i);
-
-			FILE *stream = fopen(path, "w");
-
-			if (stream == NULL) {
-				return RET_FAILURE_FILE_OPEN;
-			}
-
-			float *buffer = context->component[i].frame_buffer;
-
-			size_t b_x = context->component[i].b_x;
-			size_t b_y = context->component[i].b_y;
-
-			size_t size_x = b_x * 8;
-			size_t size_y = b_y * 8;
-
-			fprintf(stream, "P2\n%zu %zu\n255\n", size_x, size_y);
-
-			for (size_t y = 0; y < size_y; ++y) {
-				for (size_t x = 0; x < size_x; ++x) {
-					fprintf(stream, "%i ", clamp(0, (int)buffer[y * size_x + x], 255));
-				}
-				fprintf(stream, "\n");
-			}
-
-			fclose(stream);
-		}
-	}
-
-	return RET_SUCCESS;
-}
-
 struct frame {
 	uint8_t components;
 	uint16_t Y, X;
@@ -357,7 +316,7 @@ int dump_frame(struct frame *frame)
 	switch (frame->components) {
 		FILE *stream;
 		case 4:
-			stream = fopen("frame.ppm", "w");
+			stream = fopen("output.ppm", "w");
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
@@ -373,7 +332,7 @@ int dump_frame(struct frame *frame)
 			fclose(stream);
 			break;
 		case 3:
-			stream = fopen("frame.ppm", "w");
+			stream = fopen("output.ppm", "w");
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
@@ -389,7 +348,7 @@ int dump_frame(struct frame *frame)
 			fclose(stream);
 			break;
 		case 1:
-			stream = fopen("frame.pgm", "w");
+			stream = fopen("output.pgm", "w");
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
