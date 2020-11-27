@@ -263,11 +263,11 @@ int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 	err = read_nibbles(stream, &Ah, &Al);
 	RETURN_IF(err);
 
-// 	assert(Ss == 0);
-// 	assert(Se == 63);
+	assert(Ss == 0);
+	assert(Se == 63);
 	printf("Ss = %" PRIu8 " (the first DCT coefficient), Se = %" PRIu8 " (the last DCT coefficient)\n", Ss, Se);
-// 	assert(Ah == 0);
-// 	assert(Al == 0);
+	assert(Ah == 0);
+	assert(Al == 0);
 	printf("Ah = %" PRIu8 " (bit position high), Al = %" PRIu8 " (bit position low)\n", Ah, Al);
 
 	context->mblocks = 0;
