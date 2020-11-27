@@ -457,10 +457,13 @@ int parse_format(FILE *stream, struct context *context)
 			/* DQT Define quantization table(s) */
 			case 0xffdb:
 				printf("DQT\n");
+				pos = ftell(stream);
 				err = read_length(stream, &len);
 				RETURN_IF(err);
-				err = parse_qtable(stream, context);
-				RETURN_IF(err);
+				do {
+					err = parse_qtable(stream, context);
+					RETURN_IF(err);
+				} while (ftell(stream) < pos + len);
 				break;
 			/* SOF0 Baseline DCT */
 			case 0xffc0:
