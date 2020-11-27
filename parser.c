@@ -438,6 +438,38 @@ int parse_format(FILE *stream, struct context *context)
 				err = skip_segment(stream, len);
 				RETURN_IF(err);
 				break;
+			/* APP5 */
+			case 0xffe5:
+				printf("APP5\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
+			/* APP6 */
+			case 0xffe6:
+				printf("APP6\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
+			/* APP7 */
+			case 0xffe7:
+				printf("APP7\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
+			/* APP8 */
+			case 0xffe8:
+				printf("APP8\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
 			/* APP13 */
 			case 0xffed:
 				printf("APP13\n");
