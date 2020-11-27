@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include "huffman.h"
-#include "bits.h"
+#include "io.h"
 #include "common.h"
 
 int init_vlc(struct vlc *vlc)

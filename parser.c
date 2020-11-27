@@ -8,7 +8,6 @@
 #include "common.h"
 #include "io.h"
 #include "huffman.h"
-#include "bits.h"
 #include "coeffs.h"
 #include "imgproc.h"
 

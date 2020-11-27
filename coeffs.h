@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "common.h"
-#include "bits.h"
+#include "io.h"
 
 /* useful for quantized coefficients */
 struct int_block {

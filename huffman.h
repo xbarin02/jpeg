@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "common.h"
-#include "bits.h"
+#include "io.h"
 
 /* represents Huffman code
  */
