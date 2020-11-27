@@ -112,8 +112,6 @@ int invert_dct(struct context *context)
 				uint8_t P = context->precision;
 				int shift = 1 << (P - 1);
 
-				assert(shift == 128);
-
 				// level shift
 				for (int j = 0; j < 64; ++j) {
 					flt_block->c[j / 8][j % 8] += shift;
@@ -215,6 +213,7 @@ struct frame {
 	uint8_t components;
 	uint16_t Y, X;
 	size_t size_x, size_y;
+	uint8_t precision;
 
 	float *data;
 };
@@ -237,6 +236,7 @@ int frame_create(struct context *context, struct frame *frame)
 	frame->components = context->components;
 	frame->Y = context->Y;
 	frame->X = context->X;
+	frame->precision = context->precision;
 
 	size_t size_x = ceil_div(frame->X, 8 * context->max_H) * 8 * context->max_H;
 	size_t size_y = ceil_div(frame->Y, 8 * context->max_V) * 8 * context->max_V;
@@ -352,6 +352,8 @@ int dump_frame(struct frame *frame)
 {
 	assert(frame != NULL);
 
+	uint8_t P = frame->precision;
+
 	switch (frame->components) {
 		FILE *stream;
 		case 4:
@@ -359,7 +361,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P3\n%zu %zu\n255\n", (size_t)frame->X, (size_t)frame->Y);
+			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, ((size_t)1 << P) - 1);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
@@ -375,7 +377,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P3\n%zu %zu\n255\n", (size_t)frame->X, (size_t)frame->Y);
+			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, ((size_t)1 << P) - 1);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
@@ -391,7 +393,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P2\n%zu %zu\n255\n", (size_t)frame->X, (size_t)frame->Y);
+			fprintf(stream, "P2\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, ((size_t)1 << P) - 1);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x + x]), 255));
