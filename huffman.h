@@ -1,9 +1,21 @@
 #ifndef JPEG_HUFFMAN_H
 #define JPEG_HUFFMAN_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include "common.h"
-#include "vlc.h"
 #include "bits.h"
+
+/* represents Huffman code
+ */
+struct vlc {
+	uint16_t code;
+	size_t size;
+};
+
+int init_vlc(struct vlc *vlc);
+
+int vlc_add_bit(struct vlc *vlc, uint16_t bit);
 
 int generate_size_table(struct htable *htable, struct hcode *hcode);
 
