@@ -616,7 +616,7 @@ int process_jpeg_file(const char *path)
 
 int main(int argc, char *argv[])
 {
-	const char *path = argc > 1 ? argv[1] : "Car3.jpg";
+	const char *path = argc > 1 ? argv[1] : "Lenna.jpg";
 
 	int err = process_jpeg_file(path);
 
