@@ -43,24 +43,48 @@ static float C(int u)
 	return 1.f;
 }
 
+float lut[8][8];
+
+void init_lut()
+{
+	for (int x = 0; x < 8; ++x) {
+		for (int u = 0; u < 8; ++u) {
+			lut[x][u] = 0.5f * C(u) * cosf((2 * x + 1) * u * M_PI / 16);
+		}
+	}
+}
+
+void dct1(const float in[8], float out[8], size_t stride)
+{
+	for (int x = 0; x < 8; ++x) {
+		float s = 0.f;
+
+		for (int u = 0; u < 8; ++u) {
+			s += in[u * stride] * lut[x][u];
+		}
+
+		out[x * stride] = s;
+	}
+}
+
 void idct(struct flt_block *flt_block)
 {
-	/* clone input into S */
-	struct flt_block S = *flt_block;
+	static int init = 0;
+
+	// init look-up table
+	if (init == 0) {
+		init_lut();
+		init = 1;
+	}
+
+	struct flt_block b;
 
 	for (int y = 0; y < 8; ++y) {
-		for (int x = 0; x < 8; ++x) {
-			float *s = &flt_block->c[y][x];
+		dct1(flt_block->c[y], b.c[y], 1);
+	}
 
-			*s = 0.f;
-
-			for (int u = 0; u < 8; ++u) {
-				for (int v = 0; v < 8; ++v) {
-					*s += C(u) * C(v) * S.c[v][u] * cosf((2*x+1)*u*M_PI/16) * cosf((2*y+1)*v*M_PI/16);
-				}
-			}
-			*s *= 0.25f;
-		}
+	for (int x = 0; x < 8; ++x) {
+		dct1(&b.c[0][x], &flt_block->c[0][x], 8);
 	}
 }
 
