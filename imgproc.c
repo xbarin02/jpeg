@@ -363,7 +363,7 @@ int dump_frame(struct frame *frame)
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
-						fprintf(stream, "%i ", clamp(0, (int)frame->data[y * frame->size_x * 4 + x * 4 + c], 255));
+						fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * 4 + x * 4 + c]), 255));
 					}
 				}
 				fprintf(stream, "\n");
@@ -379,7 +379,7 @@ int dump_frame(struct frame *frame)
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
-						fprintf(stream, "%i ", clamp(0, (int)frame->data[y * frame->size_x * 3 + x * 3 + c], 255));
+						fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * 3 + x * 3 + c]), 255));
 					}
 				}
 				fprintf(stream, "\n");
@@ -394,7 +394,7 @@ int dump_frame(struct frame *frame)
 			fprintf(stream, "P2\n%zu %zu\n255\n", (size_t)frame->X, (size_t)frame->Y);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
-					fprintf(stream, "%i ", clamp(0, (int)frame->data[y * frame->size_x + x], 255));
+					fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x + x]), 255));
 				}
 				fprintf(stream, "\n");
 			}
