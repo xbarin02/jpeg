@@ -62,6 +62,29 @@ int parse_qtable(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
+int alloc_buffers(struct component *component, size_t size)
+{
+	component->int_buffer = malloc(sizeof(struct int_block) * size);
+
+	if (component->int_buffer == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	component->flt_buffer = malloc(sizeof(struct flt_block) * size);
+
+	if (component->flt_buffer == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	component->frame_buffer = malloc(sizeof(float) * 64 * size);
+
+	if (component->frame_buffer == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	return RET_SUCCESS;
+}
+
 static size_t ceil_div(size_t n, size_t d)
 {
 	return (n + (d - 1)) / d;
@@ -144,23 +167,8 @@ int parse_frame_header(FILE *stream, struct context *context)
 
 			printf("[DEBUG] C = %i: %zu blocks (x=%zu y=%zu)\n", i, b_x * b_y, b_x, b_y);
 
-			context->component[i].int_buffer = malloc(sizeof(struct int_block) * b_x * b_y);
-
-			if (context->component[i].int_buffer == NULL) {
-				return RET_FAILURE_MEMORY_ALLOCATION;
-			}
-
-			context->component[i].flt_buffer = malloc(sizeof(struct flt_block) * b_x * b_y);
-
-			if (context->component[i].flt_buffer == NULL) {
-				return RET_FAILURE_MEMORY_ALLOCATION;
-			}
-
-			context->component[i].frame_buffer = malloc(sizeof(float) * 64 * b_x * b_y);
-
-			if (context->component[i].frame_buffer == NULL) {
-				return RET_FAILURE_MEMORY_ALLOCATION;
-			}
+			err = alloc_buffers(&context->component[i], b_x * b_y);
+			RETURN_IF(err);
 		}
 	}
 
@@ -168,8 +176,8 @@ int parse_frame_header(FILE *stream, struct context *context)
 }
 
 const char *Tc_to_str[] = {
-	[0] = "DC table",
-	[1] = "AC table"
+	[0] = "DC",
+	[1] = "AC"
 };
 
 int parse_huffman_tables(FILE *stream, struct context *context)
@@ -182,7 +190,7 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	err = read_nibbles(stream, &Tc, &Th);
 	RETURN_IF(err);
 
-	printf("Tc = %" PRIu8 " (%s) Th = %" PRIu8 " (HT identifier)\n", Tc, Tc_to_str[Tc], Th);
+	printf("Tc = %" PRIu8 " (%s table) Th = %" PRIu8 " (HT identifier)\n", Tc, Tc_to_str[Tc], Th);
 
 	struct htable *htable = &context->htable[Tc][Th];
 
@@ -414,73 +422,17 @@ int parse_format(FILE *stream, struct context *context)
 			case 0xffd8:
 				printf("SOI\n");
 				break;
-			/* APP0 */
+			/* APPn */
 			case 0xffe0:
-				printf("APP0\n");
-				err = read_length(stream, &len);
-				RETURN_IF(err);
-				err = skip_segment(stream, len);
-				RETURN_IF(err);
-				break;
-			/* APP1 */
 			case 0xffe1:
-				printf("APP1\n");
-				err = read_length(stream, &len);
-				RETURN_IF(err);
-				err = skip_segment(stream, len);
-				RETURN_IF(err);
-				break;
-			/* APP2 */
 			case 0xffe2:
-				printf("APP2\n");
-				err = read_length(stream, &len);
-				RETURN_IF(err);
-				err = skip_segment(stream, len);
-				RETURN_IF(err);
-				break;
-			/* APP5 */
 			case 0xffe5:
-				printf("APP5\n");
-				err = read_length(stream, &len);
-				RETURN_IF(err);
-				err = skip_segment(stream, len);
-				RETURN_IF(err);
-				break;
-			/* APP6 */
 			case 0xffe6:
-				printf("APP6\n");
-				err = read_length(stream, &len);
-				RETURN_IF(err);
-				err = skip_segment(stream, len);
-				RETURN_IF(err);
-				break;
-			/* APP7 */
 			case 0xffe7:
-				printf("APP7\n");
-				err = read_length(stream, &len);
-				RETURN_IF(err);
-				err = skip_segment(stream, len);
-				RETURN_IF(err);
-				break;
-			/* APP8 */
 			case 0xffe8:
-				printf("APP8\n");
-				err = read_length(stream, &len);
-				RETURN_IF(err);
-				err = skip_segment(stream, len);
-				RETURN_IF(err);
-				break;
-			/* APP13 */
 			case 0xffed:
-				printf("APP13\n");
-				err = read_length(stream, &len);
-				RETURN_IF(err);
-				err = skip_segment(stream, len);
-				RETURN_IF(err);
-				break;
-			/* APP14 */
 			case 0xffee:
-				printf("APP14\n");
+				printf("APP%i\n", marker & 0xf);
 				err = read_length(stream, &len);
 				RETURN_IF(err);
 				err = skip_segment(stream, len);
