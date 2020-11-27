@@ -482,6 +482,15 @@ int parse_format(FILE *stream, struct context *context)
 				RETURN_IF(err);
 				fprintf(stderr, "Progressive DCT not supported!\n");
 				return RET_FAILURE_FILE_UNSUPPORTED;
+			/* SOF3 Lossless (sequential) */
+			case 0xffc3:
+				printf("SOF3\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = parse_frame_header(stream, context);
+				RETURN_IF(err);
+				fprintf(stderr, "Lossless JPEG not supported!\n");
+				return RET_FAILURE_FILE_UNSUPPORTED;
 			/* SOF9 Extended sequential DCT (arithmetic coding) */
 			case 0xffc9:
 				printf("SOF9\n");
