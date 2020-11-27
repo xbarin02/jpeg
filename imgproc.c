@@ -274,6 +274,29 @@ int frame_to_rgb(struct frame *frame)
 	assert(frame != NULL);
 
 	switch (frame->components) {
+		case 4:
+			for (size_t y = 0; y < frame->Y; ++y) {
+				for (size_t x = 0; x < frame->X; ++x) {
+					float Y_ = frame->data[y * frame->size_x * 4 + x * 4 + 0];
+					float Cb = frame->data[y * frame->size_x * 4 + x * 4 + 1];
+					float Cr = frame->data[y * frame->size_x * 4 + x * 4 + 2];
+					float K  = frame->data[y * frame->size_x * 4 + x * 4 + 3];
+
+					float C = Y_ + 1.402 * (Cr - 128);
+					float M = Y_ - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128);
+					float Y = Y_ + 1.772 * (Cb - 128);
+
+					float R = K - (C * K) / 256;
+					float G = K - (M * K) / 256;
+					float B = K - (Y * K) / 256;
+
+					frame->data[y * frame->size_x * 4 + x * 4 + 0] = R;
+					frame->data[y * frame->size_x * 4 + x * 4 + 1] = G;
+					frame->data[y * frame->size_x * 4 + x * 4 + 2] = B;
+					frame->data[y * frame->size_x * 4 + x * 4 + 3] = 0xff;
+				}
+			}
+			break;
 		case 3:
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
@@ -307,6 +330,22 @@ int dump_frame(struct frame *frame)
 
 	switch (frame->components) {
 		FILE *stream;
+		case 4:
+			stream = fopen("frame.ppm", "w");
+			if (stream == NULL) {
+				return RET_FAILURE_FILE_OPEN;
+			}
+			fprintf(stream, "P3\n%zu %zu\n255\n", (size_t)frame->X, (size_t)frame->Y);
+			for (size_t y = 0; y < frame->Y; ++y) {
+				for (size_t x = 0; x < frame->X; ++x) {
+					for (int c = 0; c < 3; ++c) {
+						fprintf(stream, "%i ", clamp(0, (int)frame->data[y * frame->size_x * 4 + x * 4 + c], 255));
+					}
+				}
+				fprintf(stream, "\n");
+			}
+			fclose(stream);
+			break;
 		case 3:
 			stream = fopen("frame.ppm", "w");
 			if (stream == NULL) {
