@@ -100,7 +100,6 @@ int invert_dct(struct context *context)
 
 			for (size_t b = 0; b < blocks; ++b) {
 				struct int_block *int_block = &context->component[i].int_buffer[b];
-
 				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
 
 				for (int j = 0; j < 64; ++j) {
@@ -311,7 +310,7 @@ int dump_frame(struct frame *frame)
 {
 	assert(frame != NULL);
 
-	uint8_t P = frame->precision;
+	size_t maxval = ((size_t)1 << frame->precision) - 1;
 
 	switch (frame->components) {
 		FILE *stream;
@@ -320,7 +319,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, ((size_t)1 << P) - 1);
+			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
@@ -336,7 +335,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, ((size_t)1 << P) - 1);
+			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
@@ -352,7 +351,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P2\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, ((size_t)1 << P) - 1);
+			fprintf(stream, "P2\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x + x]), 255));
