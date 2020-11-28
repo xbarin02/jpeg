@@ -59,12 +59,9 @@ int read_dc(struct bits *bits, struct hcode *hcode_dc, struct coeff_dc *coeff_dc
 	err = read_extra_bits(bits, cat, &extra);
 	RETURN_IF(err);
 
-	/* two's complement */
-	int32_t c = decode_coeff(cat, extra);
-
 	assert(coeff_dc != NULL);
 
-	coeff_dc->c = c;
+	coeff_dc->c = decode_coeff(cat, extra);
 
 	return RET_SUCCESS;
 }
@@ -99,10 +96,7 @@ int read_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_ac
 		coeff_ac->eob = 0;
 	}
 
-	/* two's complement */
-	int32_t c = decode_coeff(cat, extra);
-
-	coeff_ac->c = c;
+	coeff_ac->c = decode_coeff(cat, extra);
 
 	return RET_SUCCESS;
 }

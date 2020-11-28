@@ -190,9 +190,6 @@ int query_code(struct vlc *vlc, struct hcode *hcode, uint8_t *value)
 #define HUFFSIZE(K) (hcode->huff_size[(K)])
 #define HUFFCODE(K) (hcode->huff_code[(K)])
 
-#define EHUFCO(I)   (hcode->e_huf_co[(I)])
-#define EHUFSI(I)   (hcode->e_huf_si[(I)])
-
 	size_t K = 0;
 
 	do {
@@ -202,7 +199,6 @@ int query_code(struct vlc *vlc, struct hcode *hcode, uint8_t *value)
 		if (vlc->size == size && vlc->code == code) {
 			uint8_t I = HUFFVAL(K);
 			*value = I;
-// 			printf("[DEBUG] MATCH @ value=%i size=%zu code=%" PRIu16 "\n", I, EHUFSI(I), EHUFCO(I));
 			return RET_SUCCESS;
 		}
 
