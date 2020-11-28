@@ -109,7 +109,7 @@ int order_codes(struct htable *htable, struct hcode *hcode)
 	assert(htable != NULL);
 	assert(hcode != NULL);
 
-#define HUFFVAL(K)  (hcode->V_[(K)])
+#define HUFFVAL(K)  (hcode->huff_val[(K)])
 #define EHUFCO(I)   (hcode->e_huf_co[(I)])
 #define EHUFSI(I)   (hcode->e_huf_si[(I)])
 #define LASTK       (hcode->last_k)
@@ -143,14 +143,14 @@ int conv_htable_to_hcode(struct htable *htable, struct hcode *hcode)
 	assert(htable != NULL);
 	assert(hcode != NULL);
 
-	uint8_t *v_ = hcode->V_;
+	uint8_t *v = hcode->huff_val;
 
 	for (int i = 0; i < 16; ++i) {
 		uint8_t L = htable->L[i];
 
 		for (int l = 0; l < L; ++l) {
-			*v_ = htable->V[i][l];
-			v_++;
+			*v = htable->V[i][l];
+			v++;
 		}
 	}
 
@@ -185,7 +185,7 @@ int query_code(struct vlc *vlc, struct hcode *hcode, uint8_t *value)
 	assert(hcode != NULL);
 	assert(value != NULL);
 
-#define HUFFVAL(K)  (hcode->V_[(K)])
+#define HUFFVAL(K)  (hcode->huff_val[(K)])
 #define LASTK       (hcode->last_k)
 #define HUFFSIZE(K) (hcode->huff_size[(K)])
 #define HUFFCODE(K) (hcode->huff_code[(K)])

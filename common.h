@@ -97,7 +97,7 @@ struct htable {
  */
 struct hcode {
 	/* unrolled htable.V[] */
-	uint8_t V_[16 * 255];
+	uint8_t huff_val[16 * 255];
 
 	/* contains a list of code lengths */
 	size_t huff_size[256];
