@@ -35,25 +35,26 @@ int parse_qtable(FILE *stream, struct context *context)
 
 	qtable = &context->qtable[Tq];
 
-	qtable->precision = Pq;
+	/* precision */
+	qtable->Pq = Pq;
 
 	for (int i = 0; i < 64; ++i) {
 		if (Pq == 0) {
 			uint8_t byte;
 			err = read_byte(stream, &byte);
 			RETURN_IF(err);
-			qtable->element[zigzag[i]] = (uint16_t)byte;
+			qtable->Q[zigzag[i]] = (uint16_t)byte;
 		} else {
 			uint16_t word;
 			err = read_word(stream, &word);
 			RETURN_IF(err);
-			qtable->element[zigzag[i]] = word;
+			qtable->Q[zigzag[i]] = word;
 		}
 	}
 
 	for (int y = 0; y < 8; ++y) {
 		for (int x = 0; x < 8; ++x) {
-			printf("%3" PRIu16 " ", qtable->element[y * 8 + x]);
+			printf("%3" PRIu16 " ", qtable->Q[y * 8 + x]);
 		}
 		printf("\n");
 	}
@@ -116,10 +117,14 @@ int parse_frame_header(FILE *stream, struct context *context)
 
 	printf("P = %" PRIu8 " (Sample precision), Y = %" PRIu16 ", X = %" PRIu16 ", Nf = %" PRIu8 " (Number of image components)\n", P, Y, X, Nf);
 
-	context->precision = P;
+	/* precision */
+	context->P = P;
+
 	context->Y = Y;
 	context->X = X;
-	context->components = Nf;
+
+	/* components */
+	context->Nf = Nf;
 
 	uint8_t max_H = 0, max_V = 0;
 

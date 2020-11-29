@@ -52,10 +52,10 @@ static const uint8_t zigzag[64] = {
 	} while (0)
 
 struct qtable {
-	/* Value 0 indicates 8-bit Qk values; value 1 indicates 16-bit Qk values. */
-	uint8_t precision;
-	/* in zig-zag scan order */
-	uint16_t element[64];
+	/* precision: Value 0 indicates 8-bit Qk values; value 1 indicates 16-bit Qk values. */
+	uint8_t Pq;
+	/* elements: in raster scan order */
+	uint16_t Q[64];
 };
 
 struct component {
@@ -120,13 +120,13 @@ struct context {
 	struct qtable qtable[4];
 
 	/*  Sample precision */
-	uint8_t precision;
+	uint8_t P;
 
 	/* Number of lines, Number of samples per line */
 	uint16_t Y, X;
 
 	/* Number of image components in frame */
-	uint8_t components;
+	uint8_t Nf;
 
 	struct component component[256];
 

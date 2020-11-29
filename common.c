@@ -6,10 +6,10 @@ int init_qtable(struct qtable *qtable)
 {
 	assert(qtable != NULL);
 
-	qtable->precision = 0;
+	qtable->Pq = 0;
 
 	for (int i = 0; i < 64; ++i) {
-		qtable->element[i] = 0;
+		qtable->Q[i] = 0;
 	}
 
 	return RET_SUCCESS;
@@ -63,12 +63,12 @@ int init_context(struct context *context)
 		init_qtable(&context->qtable[i]);
 	}
 
-	context->precision = 0;
+	context->P = 0;
 
 	context->Y = 0;
 	context->X = 0;
 
-	context->components = 0;
+	context->Nf = 0;
 
 	for (int i = 0; i < 256; ++i) {
 		init_component(&context->component[i]);

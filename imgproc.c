@@ -25,7 +25,7 @@ int dequantize(struct context *context)
 				struct int_block *int_block = &context->component[i].int_buffer[b];
 
 				for (int j = 0; j < 64; ++j) {
-					int_block->c[j] *= (int32_t)qtable->element[j];
+					int_block->c[j] *= (int32_t)qtable->Q[j];
 				}
 			}
 		}
@@ -108,7 +108,8 @@ int invert_dct(struct context *context)
 
 				idct(flt_block);
 
-				uint8_t P = context->precision;
+				/* precision */
+				uint8_t P = context->P;
 				int shift = 1 << (P - 1);
 
 				// level shift
@@ -191,10 +192,10 @@ int frame_create(struct context *context, struct frame *frame)
 	assert(context != NULL);
 	assert(frame != NULL);
 
-	frame->components = context->components;
+	frame->components = context->Nf;
 	frame->Y = context->Y;
 	frame->X = context->X;
-	frame->precision = context->precision;
+	frame->precision = context->P;
 
 	size_t size_x = ceil_div(frame->X, 8 * context->max_H) * 8 * context->max_H;
 	size_t size_y = ceil_div(frame->Y, 8 * context->max_V) * 8 * context->max_V;
