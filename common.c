@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <assert.h>
 #include "common.h"
+#include "mjpeg.h"
+#include "huffman.h"
 
 int init_qtable(struct qtable *qtable)
 {
@@ -79,6 +81,17 @@ int init_context(struct context *context)
 			init_htable(&context->htable[j][i]);
 		}
 	}
+
+	/* implicit MJPEG tables */
+	context->htable[0][0] = mjpg_htable_0_0;
+	context->htable[0][1] = mjpg_htable_0_1;
+	context->htable[1][0] = mjpg_htable_1_0;
+	context->htable[1][1] = mjpg_htable_1_1;
+
+	conv_htable_to_hcode(&context->htable[0][0], &context->hcode[0][0]);
+	conv_htable_to_hcode(&context->htable[0][1], &context->hcode[0][1]);
+	conv_htable_to_hcode(&context->htable[1][0], &context->hcode[1][0]);
+	conv_htable_to_hcode(&context->htable[1][1], &context->hcode[1][1]);
 
 	context->Ri = 0;
 
