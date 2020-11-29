@@ -1,5 +1,5 @@
-Minimalistic JPEG decoder
-=========================
+Minimalist JPEG decoder
+=======================
 
 - written in C99
 - can parse YCbCr, YCCK and grayscale images
