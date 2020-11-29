@@ -3,7 +3,7 @@ Minimalistic JPEG decoder
 
 - written in C99
 - can parse YCbCr, YCCK and grayscale images
-- can handle 8-bit component depth
+- can handle 8-bit or 12-bit samples
 - can handle subsampled components
 - can handle restart markers
 - does not support progressive JPEG files
