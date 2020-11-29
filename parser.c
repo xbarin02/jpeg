@@ -558,6 +558,11 @@ int parse_format(FILE *stream, struct context *context)
 			/* EOI* End of image */
 			case 0xffd9:
 				printf("EOI\n");
+				pos = ftell(stream);
+				fseek(stream, 0, SEEK_END);
+				if (ftell(stream) - pos > 0) {
+					printf("*** %li bytes of garbage ***\n", ftell(stream) - pos);
+				}
 				err = dequantize(context);
 				RETURN_IF(err);
 				err = invert_dct(context);
