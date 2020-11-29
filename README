@@ -6,6 +6,7 @@ Minimalistic JPEG decoder
 - can handle 8-bit or 12-bit samples
 - can handle subsampled components
 - can handle restart markers
+- supports interleaved and non-interleaved scans
 - does not support progressive JPEG files
 - does not support arithmetic coding
 
