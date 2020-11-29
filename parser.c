@@ -296,48 +296,77 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 
 	size_t seq_no = context->mblocks;
 
-	size_t x = seq_no % context->m_x;
-	size_t y = seq_no / context->m_x;
+	if (scan->Ns > 1) {
+		size_t x = seq_no % context->m_x;
+		size_t y = seq_no / context->m_x;
 
-// 	printf("[DEBUG] reading macroblock... x=%zu y=%zu\n", x, y);
+// 		printf("[DEBUG] reading macroblock... x=%zu y=%zu\n", x, y);
 
-	/* for each component */
-	for (int j = 0; j < scan->Ns; ++j) {
-		uint8_t Cs = scan->Cs[j];
+		/* for each component */
+		for (int j = 0; j < scan->Ns; ++j) {
+			uint8_t Cs = scan->Cs[j];
+			uint8_t H = context->component[Cs].H;
+			uint8_t V = context->component[Cs].V;
+
+// 			printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu\n", Cs, x * H, y * V);
+
+			/* for each 8x8 block */
+			for (int v = 0; v < V; ++v) {
+				for (int h = 0; h < H; ++h) {
+					size_t block_x = x * H + h;
+					size_t block_y = y * V + v;
+
+					assert(block_x < context->component[Cs].b_x);
+
+					size_t block_seq = block_y * context->component[Cs].b_x + block_x;
+
+// 					printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu out of X=%zu Y=%zu\n", Cs, x * H + h, y * V + v, context->component[Cs].b_x, context->component[Cs].b_y);
+// 					printf("[DEBUG] reading component %" PRIu8 " block# %zu out of %zu\n", Cs, block_seq, context->component[Cs].b_x * context->component[Cs].b_y);
+
+					struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
+
+					/* read block */
+					err = read_block(bits, context, Cs, int_block);
+					RETURN_IF(err);
+
+					if (scan->last_block[Cs] != NULL) {
+						int_block->c[0] += scan->last_block[Cs]->c[0];
+					}
+
+					scan->last_block[Cs] = int_block;
+				}
+			}
+		}
+	} else {
+		/* A.2.2 Non-interleaved order (Ns = 1) */
+		assert(scan->Ns == 1);
+
+		uint8_t Cs = scan->Cs[0];
+
 		uint8_t H = context->component[Cs].H;
 		uint8_t V = context->component[Cs].V;
 
-// 		printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu\n", Cs, x * H, y * V);
+		size_t blocks_in_mb = H * V;
 
-		/* for each 8x8 block */
-		for (int v = 0; v < V; ++v) {
-			for (int h = 0; h < H; ++h) {
-				size_t block_x = x * H + h;
-				size_t block_y = y * V + v;
+		for (size_t w = 0; w < blocks_in_mb; ++w) {
+			size_t block_x = (blocks_in_mb * seq_no + w) % context->component[Cs].b_x;
+			size_t block_y = (blocks_in_mb * seq_no + w) / context->component[Cs].b_x;
 
-				assert(block_x < context->component[Cs].b_x);
+			size_t block_seq = block_y * context->component[Cs].b_x + block_x;
 
-				size_t block_seq = block_y * context->component[Cs].b_x + block_x;
+			struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
 
-// 				printf("[DEBUG] reading component %" PRIu8 " blocks @ x=%zu y=%zu out of X=%zu Y=%zu\n", Cs, x * H + h, y * V + v, context->component[Cs].b_x, context->component[Cs].b_y);
-// 				printf("[DEBUG] reading component %" PRIu8 " block# %zu out of %zu\n", Cs, block_seq, context->component[Cs].b_x * context->component[Cs].b_y);
+			/* read block */
+			err = read_block(bits, context, Cs, int_block);
+			RETURN_IF(err);
 
-				struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
-
-				/* read block */
-				err = read_block(bits, context, Cs, int_block);
-				RETURN_IF(err);
-
-				if (scan->last_block[Cs] != NULL) {
-					int_block->c[0] += scan->last_block[Cs]->c[0];
-				}
-
-				scan->last_block[Cs] = int_block;
+			if (scan->last_block[Cs] != NULL) {
+				int_block->c[0] += scan->last_block[Cs]->c[0];
 			}
+
+			scan->last_block[Cs] = int_block;
 		}
 	}
-
-// 	printf("[DEBUG] macroblock complete\n");
 
 	return RET_SUCCESS;
 }
