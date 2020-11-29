@@ -256,6 +256,9 @@ int frame_to_rgb(struct frame *frame)
 {
 	assert(frame != NULL);
 
+	int shift = 1 << (frame->precision - 1);
+	int denom = 1 << frame->precision;
+
 	switch (frame->components) {
 		case 4:
 			for (size_t y = 0; y < frame->Y; ++y) {
@@ -265,13 +268,13 @@ int frame_to_rgb(struct frame *frame)
 					float Cr = frame->data[y * frame->size_x * 4 + x * 4 + 2];
 					float K  = frame->data[y * frame->size_x * 4 + x * 4 + 3];
 
-					float C = Y_ + 1.402 * (Cr - 128);
-					float M = Y_ - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128);
-					float Y = Y_ + 1.772 * (Cb - 128);
+					float C = Y_ + 1.402 * (Cr - shift);
+					float M = Y_ - 0.34414 * (Cb - shift) - 0.71414 * (Cr - shift);
+					float Y = Y_ + 1.772 * (Cb - shift);
 
-					float R = K - (C * K) / 256;
-					float G = K - (M * K) / 256;
-					float B = K - (Y * K) / 256;
+					float R = K - (C * K) / denom;
+					float G = K - (M * K) / denom;
+					float B = K - (Y * K) / denom;
 
 					frame->data[y * frame->size_x * 4 + x * 4 + 0] = R;
 					frame->data[y * frame->size_x * 4 + x * 4 + 1] = G;
@@ -287,9 +290,9 @@ int frame_to_rgb(struct frame *frame)
 					float Cb = frame->data[y * frame->size_x * 3 + x * 3 + 1];
 					float Cr = frame->data[y * frame->size_x * 3 + x * 3 + 2];
 
-					float R = Y + 1.402 * (Cr - 128);
-					float G = Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128);
-					float B = Y + 1.772 * (Cb - 128);
+					float R = Y + 1.402 * (Cr - shift);
+					float G = Y - 0.34414 * (Cb - shift) - 0.71414 * (Cr - shift);
+					float B = Y + 1.772 * (Cb - shift);
 
 					frame->data[y * frame->size_x * 3 + x * 3 + 0] = R;
 					frame->data[y * frame->size_x * 3 + x * 3 + 1] = G;
@@ -324,7 +327,7 @@ int dump_frame(struct frame *frame)
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
-						fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * 4 + x * 4 + c]), 255));
+						fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * 4 + x * 4 + c]), (int)maxval));
 					}
 				}
 				fprintf(stream, "\n");
@@ -340,7 +343,7 @@ int dump_frame(struct frame *frame)
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
 					for (int c = 0; c < 3; ++c) {
-						fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * 3 + x * 3 + c]), 255));
+						fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * 3 + x * 3 + c]), (int)maxval));
 					}
 				}
 				fprintf(stream, "\n");
@@ -355,7 +358,7 @@ int dump_frame(struct frame *frame)
 			fprintf(stream, "P2\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
 			for (size_t y = 0; y < frame->Y; ++y) {
 				for (size_t x = 0; x < frame->X; ++x) {
-					fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x + x]), 255));
+					fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x + x]), (int)maxval));
 				}
 				fprintf(stream, "\n");
 			}

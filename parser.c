@@ -111,7 +111,6 @@ int parse_frame_header(FILE *stream, struct context *context)
 	err = read_byte(stream, &Nf);
 	RETURN_IF(err);
 
-	assert(P == 8);
 	assert(X > 0);
 	assert(Nf > 0);
 
@@ -456,6 +455,14 @@ int parse_format(FILE *stream, struct context *context)
 			/* SOF0 Baseline DCT */
 			case 0xffc0:
 				printf("SOF0\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = parse_frame_header(stream, context);
+				RETURN_IF(err);
+				break;
+			/* SOF1 Extended sequential DCT */
+			case 0xffc1:
+				printf("SOF1\n");
 				err = read_length(stream, &len);
 				RETURN_IF(err);
 				err = parse_frame_header(stream, context);
