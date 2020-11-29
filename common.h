@@ -4,8 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct block; /* fwd declaration to avoid circular dependency coeffs.h <=> common.h */
-
 /**
  * \brief Error codes
  *
