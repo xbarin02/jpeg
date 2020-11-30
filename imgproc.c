@@ -24,9 +24,14 @@ int dequantize(struct context *context)
 			// for each block, for each coefficient, c[] *= Q[]
 			for (size_t b = 0; b < blocks; ++b) {
 				struct int_block *int_block = &context->component[i].int_buffer[b];
+				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
 
 				for (int j = 0; j < 64; ++j) {
 					int_block->c[j] *= (int32_t)qtable->Q[j];
+				}
+
+				for (int j = 0; j < 64; ++j) {
+					flt_block->c[j / 8][j % 8] = (float)int_block->c[j];
 				}
 			}
 		}
@@ -100,12 +105,7 @@ int invert_dct(struct context *context)
 			size_t blocks = context->component[i].b_x * context->component[i].b_y;
 
 			for (size_t b = 0; b < blocks; ++b) {
-				struct int_block *int_block = &context->component[i].int_buffer[b];
 				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
-
-				for (int j = 0; j < 64; ++j) {
-					flt_block->c[j / 8][j % 8] = (float)int_block->c[j];
-				}
 
 				idct(flt_block);
 
