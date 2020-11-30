@@ -150,13 +150,33 @@ int frame_to_rgb(struct frame *frame)
 	return RET_SUCCESS;
 }
 
+int dump_frame_body(struct frame *frame, int components, FILE *stream)
+{
+	assert(frame != NULL);
+
+	uint8_t Nf = frame->components;
+	size_t maxval = ((size_t)1 << frame->precision) - 1;
+
+	for (size_t y = 0; y < frame->Y; ++y) {
+		for (size_t x = 0; x < frame->X; ++x) {
+			for (int c = 0; c < components; ++c) {
+				fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * Nf + x * Nf + c]), (int)maxval));
+			}
+		}
+		fprintf(stream, "\n");
+	}
+
+	return RET_SUCCESS;
+}
+
 int dump_frame(struct frame *frame)
 {
 	assert(frame != NULL);
 
+	uint8_t Nf = frame->components;
 	size_t maxval = ((size_t)1 << frame->precision) - 1;
 
-	switch (frame->components) {
+	switch (Nf) {
 		FILE *stream;
 		case 4:
 			stream = fopen("output.ppm", "w");
@@ -164,14 +184,7 @@ int dump_frame(struct frame *frame)
 				return RET_FAILURE_FILE_OPEN;
 			}
 			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
-			for (size_t y = 0; y < frame->Y; ++y) {
-				for (size_t x = 0; x < frame->X; ++x) {
-					for (int c = 0; c < 3; ++c) {
-						fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * 4 + x * 4 + c]), (int)maxval));
-					}
-				}
-				fprintf(stream, "\n");
-			}
+			dump_frame_body(frame, 3, stream);
 			fclose(stream);
 			break;
 		case 3:
@@ -180,14 +193,7 @@ int dump_frame(struct frame *frame)
 				return RET_FAILURE_FILE_OPEN;
 			}
 			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
-			for (size_t y = 0; y < frame->Y; ++y) {
-				for (size_t x = 0; x < frame->X; ++x) {
-					for (int c = 0; c < 3; ++c) {
-						fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * 3 + x * 3 + c]), (int)maxval));
-					}
-				}
-				fprintf(stream, "\n");
-			}
+			dump_frame_body(frame, 3, stream);
 			fclose(stream);
 			break;
 		case 1:
@@ -196,12 +202,7 @@ int dump_frame(struct frame *frame)
 				return RET_FAILURE_FILE_OPEN;
 			}
 			fprintf(stream, "P2\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
-			for (size_t y = 0; y < frame->Y; ++y) {
-				for (size_t x = 0; x < frame->X; ++x) {
-					fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x + x]), (int)maxval));
-				}
-				fprintf(stream, "\n");
-			}
+			dump_frame_body(frame, 1, stream);
 			fclose(stream);
 			break;
 		default:
