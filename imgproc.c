@@ -156,7 +156,7 @@ int conv_blocks_to_frame(struct context *context)
 	return RET_SUCCESS;
 }
 
-int dump_image(struct context *context)
+int write_image(struct context *context, const char *path)
 {
 	int err;
 
@@ -166,7 +166,7 @@ int dump_image(struct context *context)
 	RETURN_IF(err);
 	err = frame_to_rgb(&frame);
 	RETURN_IF(err);
-	err = dump_frame(&frame);
+	err = write_frame(&frame, path);
 	RETURN_IF(err);
 	frame_destroy(&frame);
 

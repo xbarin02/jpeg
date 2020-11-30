@@ -20,6 +20,6 @@ void frame_destroy(struct frame *frame);
 
 int frame_to_rgb(struct frame *frame);
 
-int dump_frame(struct frame *frame);
+int write_frame(struct frame *frame, const char *path);
 
 #endif

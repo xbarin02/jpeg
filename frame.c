@@ -152,7 +152,7 @@ int frame_to_rgb(struct frame *frame)
 	return RET_SUCCESS;
 }
 
-size_t convert_maxval_to_size(int maxval)
+size_t convert_maxval_to_sample_size(int maxval)
 {
 	assert(maxval > 0);
 
@@ -165,13 +165,13 @@ size_t convert_maxval_to_size(int maxval)
 	return 0;
 }
 
-int dump_frame_body(struct frame *frame, int components, FILE *stream)
+int write_frame_body(struct frame *frame, int components, FILE *stream)
 {
 	assert(frame != NULL);
 
 	uint8_t Nf = frame->components;
 	int maxval = (1 << frame->precision) - 1;
-	size_t sample_size = convert_maxval_to_size(maxval);
+	size_t sample_size = convert_maxval_to_sample_size(maxval);
 	size_t width = (size_t)frame->X;
 	size_t height = (size_t)frame->Y;
 	size_t line_size = sample_size * components * width;
@@ -219,7 +219,7 @@ int dump_frame_body(struct frame *frame, int components, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int dump_frame_header(struct frame *frame, int components, FILE *stream)
+int write_frame_header(struct frame *frame, int components, FILE *stream)
 {
 	assert(frame != NULL);
 
@@ -243,7 +243,7 @@ int dump_frame_header(struct frame *frame, int components, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int dump_frame(struct frame *frame)
+int write_frame(struct frame *frame, const char *path)
 {
 	assert(frame != NULL);
 
@@ -252,35 +252,35 @@ int dump_frame(struct frame *frame)
 	switch (frame->components) {
 		FILE *stream;
 		case 4:
-			stream = fopen("output.ppm", "w");
+			stream = fopen(path != NULL ? path : "output.ppm", "w");
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			err = dump_frame_header(frame, 3, stream);
+			err = write_frame_header(frame, 3, stream);
 			RETURN_IF(err);
-			err = dump_frame_body(frame, 3, stream);
+			err = write_frame_body(frame, 3, stream);
 			RETURN_IF(err);
 			fclose(stream);
 			break;
 		case 3:
-			stream = fopen("output.ppm", "w");
+			stream = fopen(path != NULL ? path : "output.ppm", "w");
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			err = dump_frame_header(frame, 3, stream);
+			err = write_frame_header(frame, 3, stream);
 			RETURN_IF(err);
-			err = dump_frame_body(frame, 3, stream);
+			err = write_frame_body(frame, 3, stream);
 			RETURN_IF(err);
 			fclose(stream);
 			break;
 		case 1:
-			stream = fopen("output.pgm", "w");
+			stream = fopen(path != NULL ? path : "output.pgm", "w");
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			err = dump_frame_header(frame, 1, stream);
+			err = write_frame_header(frame, 1, stream);
 			RETURN_IF(err);
-			err = dump_frame_body(frame, 1, stream);
+			err = write_frame_body(frame, 1, stream);
 			RETURN_IF(err);
 			fclose(stream);
 			break;
