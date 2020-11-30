@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -155,12 +156,12 @@ int dump_frame_body(struct frame *frame, int components, FILE *stream)
 	assert(frame != NULL);
 
 	uint8_t Nf = frame->components;
-	size_t maxval = ((size_t)1 << frame->precision) - 1;
+	int maxval = (1 << frame->precision) - 1;
 
 	for (size_t y = 0; y < frame->Y; ++y) {
 		for (size_t x = 0; x < frame->X; ++x) {
 			for (int c = 0; c < components; ++c) {
-				fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * Nf + x * Nf + c]), (int)maxval));
+				fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * Nf + x * Nf + c]), maxval));
 			}
 		}
 		fprintf(stream, "\n");
@@ -174,7 +175,7 @@ int dump_frame(struct frame *frame)
 	assert(frame != NULL);
 
 	uint8_t Nf = frame->components;
-	size_t maxval = ((size_t)1 << frame->precision) - 1;
+	int maxval = (1 << frame->precision) - 1;
 
 	switch (Nf) {
 		FILE *stream;
@@ -183,7 +184,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
+			fprintf(stream, "P3\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval);
 			dump_frame_body(frame, 3, stream);
 			fclose(stream);
 			break;
@@ -192,7 +193,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P3\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
+			fprintf(stream, "P3\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval);
 			dump_frame_body(frame, 3, stream);
 			fclose(stream);
 			break;
@@ -201,7 +202,7 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			fprintf(stream, "P2\n%zu %zu\n%zu\n", (size_t)frame->X, (size_t)frame->Y, maxval);
+			fprintf(stream, "P2\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval);
 			dump_frame_body(frame, 1, stream);
 			fclose(stream);
 			break;
