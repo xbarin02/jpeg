@@ -94,6 +94,10 @@ int invert_dct(struct context *context)
 {
 	assert(context != NULL);
 
+	/* precision */
+	uint8_t P = context->P;
+	int shift = 1 << (P - 1);
+
 	for (int i = 0; i < 256; ++i) {
 		if (context->component[i].int_buffer != NULL) {
 			printf("IDCT on component %i...\n", i);
@@ -104,10 +108,6 @@ int invert_dct(struct context *context)
 				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
 
 				idct(flt_block);
-
-				/* precision */
-				uint8_t P = context->P;
-				int shift = 1 << (P - 1);
 
 				// level shift
 				for (int j = 0; j < 64; ++j) {
