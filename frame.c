@@ -178,10 +178,14 @@ int dump_frame_header(struct frame *frame, int components, FILE *stream)
 
 	switch (components) {
 		case 3:
-			fprintf(stream, "P3\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval);
+			if (fprintf(stream, "P3\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval) < 0) {
+				return RET_FAILURE_FILE_IO;
+			}
 			break;
 		case 1:
-			fprintf(stream, "P2\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval);
+			if (fprintf(stream, "P2\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval) < 0) {
+				return RET_FAILURE_FILE_IO;
+			}
 			break;
 		default:
 			return RET_FAILURE_FILE_UNSUPPORTED;
@@ -194,16 +198,17 @@ int dump_frame(struct frame *frame)
 {
 	assert(frame != NULL);
 
-	uint8_t Nf = frame->components;
+	int err;
 
-	switch (Nf) {
+	switch (frame->components) {
 		FILE *stream;
 		case 4:
 			stream = fopen("output.ppm", "w");
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			dump_frame_header(frame, 3, stream);
+			err = dump_frame_header(frame, 3, stream);
+			RETURN_IF(err);
 			dump_frame_body(frame, 3, stream);
 			fclose(stream);
 			break;
@@ -212,7 +217,8 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			dump_frame_header(frame, 3, stream);
+			err = dump_frame_header(frame, 3, stream);
+			RETURN_IF(err);
 			dump_frame_body(frame, 3, stream);
 			fclose(stream);
 			break;
@@ -221,7 +227,8 @@ int dump_frame(struct frame *frame)
 			if (stream == NULL) {
 				return RET_FAILURE_FILE_OPEN;
 			}
-			dump_frame_header(frame, 1, stream);
+			err = dump_frame_header(frame, 1, stream);
+			RETURN_IF(err);
 			dump_frame_body(frame, 1, stream);
 			fclose(stream);
 			break;
