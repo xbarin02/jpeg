@@ -27,11 +27,7 @@ int dequantize(struct context *context)
 				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
 
 				for (int j = 0; j < 64; ++j) {
-					int_block->c[j] *= (int32_t)qtable->Q[j];
-				}
-
-				for (int j = 0; j < 64; ++j) {
-					flt_block->c[j] = (float)int_block->c[j];
+					flt_block->c[j] = (float)(int_block->c[j] * (int32_t)qtable->Q[j]);
 				}
 			}
 		}
