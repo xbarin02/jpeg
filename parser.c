@@ -434,7 +434,7 @@ int parse_comment(FILE *stream, uint16_t len)
 	return RET_SUCCESS;
 }
 
-int parse_format(FILE *stream, struct context *context)
+int parse_format(FILE *stream, struct context *context, const char *path)
 {
 	int err;
 
@@ -569,7 +569,7 @@ int parse_format(FILE *stream, struct context *context)
 				RETURN_IF(err);
 				err = conv_blocks_to_frame(context);
 				RETURN_IF(err);
-				err = write_image(context, NULL);
+				err = write_image(context, path);
 				RETURN_IF(err);
 				return RET_SUCCESS;
 			/* DRI Define restart interval */
@@ -617,7 +617,7 @@ void free_buffers(struct context *context)
 	}
 }
 
-int process_jpeg_stream(FILE *stream)
+int process_jpeg_stream(FILE *stream, const char *path)
 {
 	int err;
 
@@ -634,7 +634,7 @@ int process_jpeg_stream(FILE *stream)
 		goto end;
 	}
 
-	err = parse_format(stream, context);
+	err = parse_format(stream, context, path);
 end:
 	free_buffers(context);
 
@@ -643,16 +643,16 @@ end:
 	return err;
 }
 
-int process_jpeg_file(const char *path)
+int process_jpeg_file(const char *i_path, const char *o_path)
 {
-	FILE *stream = fopen(path, "r");
+	FILE *stream = fopen(i_path, "r");
 
 	if (stream == NULL) {
 		fprintf(stderr, "fopen failure\n");
 		return RET_FAILURE_FILE_OPEN;
 	}
 
-	int err = process_jpeg_stream(stream);
+	int err = process_jpeg_stream(stream, o_path);
 
 	fclose(stream);
 
@@ -661,9 +661,10 @@ int process_jpeg_file(const char *path)
 
 int main(int argc, char *argv[])
 {
-	const char *path = argc > 1 ? argv[1] : "Lenna.jpg";
+	const char *i_path = argc > 1 ? argv[1] : "Lenna.jpg";
+	const char *o_path = argc > 2 ? argv[2] : NULL;
 
-	int err = process_jpeg_file(path);
+	int err = process_jpeg_file(i_path, o_path);
 
 	if (err) {
 		return 1;
