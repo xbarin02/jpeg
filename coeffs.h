@@ -14,7 +14,7 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct in
 
 /* useful for floating-point DCT */
 struct flt_block {
-	float c[8][8];
+	float c[64];
 };
 
 #endif

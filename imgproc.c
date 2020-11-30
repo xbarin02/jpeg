@@ -31,7 +31,7 @@ int dequantize(struct context *context)
 				}
 
 				for (int j = 0; j < 64; ++j) {
-					flt_block->c[j / 8][j % 8] = (float)int_block->c[j];
+					flt_block->c[j] = (float)int_block->c[j];
 				}
 			}
 		}
@@ -86,11 +86,11 @@ void idct(struct flt_block *flt_block)
 	struct flt_block b;
 
 	for (int y = 0; y < 8; ++y) {
-		dct1(flt_block->c[y], b.c[y], 1);
+		dct1(&flt_block->c[y * 8], &b.c[y * 8], 1);
 	}
 
 	for (int x = 0; x < 8; ++x) {
-		dct1(&b.c[0][x], &flt_block->c[0][x], 8);
+		dct1(&b.c[x], &flt_block->c[x], 8);
 	}
 }
 
@@ -115,7 +115,7 @@ int invert_dct(struct context *context)
 
 				// level shift
 				for (int j = 0; j < 64; ++j) {
-					flt_block->c[j / 8][j % 8] += shift;
+					flt_block->c[j] += shift;
 				}
 			}
 		}
@@ -145,7 +145,7 @@ int conv_blocks_to_frame(struct context *context)
 
 					for (int v = 0; v < 8; ++v) {
 						for (int u = 0; u < 8; ++u) {
-							buffer[y * b_x * 8 * 8 + v * b_x * 8 + x * 8 + u] = flt_block->c[v][u];
+							buffer[y * b_x * 8 * 8 + v * b_x * 8 + x * 8 + u] = flt_block->c[v * 8 + u];
 						}
 					}
 				}
