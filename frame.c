@@ -258,7 +258,8 @@ int dump_frame(struct frame *frame)
 			}
 			err = dump_frame_header(frame, 3, stream);
 			RETURN_IF(err);
-			dump_frame_body(frame, 3, stream);
+			err = dump_frame_body(frame, 3, stream);
+			RETURN_IF(err);
 			fclose(stream);
 			break;
 		case 3:
@@ -268,7 +269,8 @@ int dump_frame(struct frame *frame)
 			}
 			err = dump_frame_header(frame, 3, stream);
 			RETURN_IF(err);
-			dump_frame_body(frame, 3, stream);
+			err = dump_frame_body(frame, 3, stream);
+			RETURN_IF(err);
 			fclose(stream);
 			break;
 		case 1:
@@ -278,7 +280,8 @@ int dump_frame(struct frame *frame)
 			}
 			err = dump_frame_header(frame, 1, stream);
 			RETURN_IF(err);
-			dump_frame_body(frame, 1, stream);
+			err = dump_frame_body(frame, 1, stream);
+			RETURN_IF(err);
 			fclose(stream);
 			break;
 		default:
