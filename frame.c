@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <arpa/inet.h>
 #include "frame.h"
 
 int clamp(int min, int val, int max)
@@ -151,21 +152,69 @@ int frame_to_rgb(struct frame *frame)
 	return RET_SUCCESS;
 }
 
+size_t convert_maxval_to_size(int maxval)
+{
+	assert(maxval > 0);
+
+	if (maxval <= UINT8_MAX)
+		return sizeof(uint8_t);
+	if (maxval <= UINT16_MAX)
+		return sizeof(uint16_t);
+
+	/* not supported */
+	return 0;
+}
+
 int dump_frame_body(struct frame *frame, int components, FILE *stream)
 {
 	assert(frame != NULL);
 
 	uint8_t Nf = frame->components;
 	int maxval = (1 << frame->precision) - 1;
+	size_t sample_size = convert_maxval_to_size(maxval);
+	size_t width = (size_t)frame->X;
+	size_t height = (size_t)frame->Y;
+	size_t line_size = sample_size * components * width;
 
-	for (size_t y = 0; y < frame->Y; ++y) {
-		for (size_t x = 0; x < frame->X; ++x) {
-			for (int c = 0; c < components; ++c) {
-				fprintf(stream, "%i ", clamp(0, (int)roundf(frame->data[y * frame->size_x * Nf + x * Nf + c]), maxval));
-			}
-		}
-		fprintf(stream, "\n");
+	void *line = malloc(line_size);
+
+	if (line == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
+
+	for (size_t y = 0; y < height; ++y) {
+		switch (sample_size) {
+			case sizeof(uint8_t): {
+				uint8_t *line_ = line;
+				for (size_t x = 0; x < width; ++x) {
+					for (int c = 0; c < components; ++c) {
+						float sample = roundf(frame->data[y * frame->size_x * Nf + x * Nf + c]);
+						*line_++ = (uint8_t)clamp(0, (int)sample, maxval);
+					}
+				}
+				break;
+			}
+			case sizeof(uint16_t): {
+				uint16_t *line_ = line;
+				for (size_t x = 0; x < width; ++x) {
+					for (int c = 0; c < components; ++c) {
+						float sample = roundf(frame->data[y * frame->size_x * Nf + x * Nf + c]);
+						*line_++ = htons((uint16_t)clamp(0, (int)sample, maxval));
+					}
+				}
+				break;
+			}
+			default:
+				return RET_FAILURE_LOGIC_ERROR;
+		}
+		/* write line */
+		if (fwrite(line, 1, line_size, stream) < line_size) {
+			free(line);
+			return RET_FAILURE_FILE_IO;
+		}
+	}
+
+	free(line);
 
 	return RET_SUCCESS;
 }
@@ -178,12 +227,12 @@ int dump_frame_header(struct frame *frame, int components, FILE *stream)
 
 	switch (components) {
 		case 3:
-			if (fprintf(stream, "P3\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval) < 0) {
+			if (fprintf(stream, "P6\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval) < 0) {
 				return RET_FAILURE_FILE_IO;
 			}
 			break;
 		case 1:
-			if (fprintf(stream, "P2\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval) < 0) {
+			if (fprintf(stream, "P5\n%" PRIu16 " %" PRIu16 "\n%i\n", frame->X, frame->Y, maxval) < 0) {
 				return RET_FAILURE_FILE_IO;
 			}
 			break;
