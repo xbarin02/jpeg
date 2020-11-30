@@ -329,6 +329,7 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 					err = read_block(bits, context, Cs, int_block);
 					RETURN_IF(err);
 
+					/* remove differential DC coding */
 					if (scan->last_block[Cs] != NULL) {
 						int_block->c[0] += scan->last_block[Cs]->c[0];
 					}
