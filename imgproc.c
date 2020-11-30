@@ -8,6 +8,17 @@
 #include "coeffs.h"
 #include "frame.h"
 
+void dequantize_block(struct int_block *int_block, struct flt_block *flt_block, struct qtable *qtable)
+{
+	assert(int_block != NULL);
+	assert(flt_block != NULL);
+	assert(qtable != NULL);
+
+	for (int j = 0; j < 64; ++j) {
+		flt_block->c[j] = (float)(int_block->c[j] * (int32_t)qtable->Q[j]);
+	}
+}
+
 int dequantize(struct context *context)
 {
 	assert(context != NULL);
@@ -26,9 +37,7 @@ int dequantize(struct context *context)
 				struct int_block *int_block = &context->component[i].int_buffer[b];
 				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
 
-				for (int j = 0; j < 64; ++j) {
-					flt_block->c[j] = (float)(int_block->c[j] * (int32_t)qtable->Q[j]);
-				}
+				dequantize_block(int_block, flt_block, qtable);
 			}
 		}
 	}
