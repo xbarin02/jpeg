@@ -2,27 +2,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <assert.h>
 #include "common.h"
 #include "frame.h"
 #include "coeffs.h"
 #include "imgproc.h"
 
-int process_stream(FILE *stream)
+int read_image(struct context *context, FILE *stream)
 {
 	int err;
 
 	struct frame frame;
+
+	assert(context != NULL);
 
 	// load PPM/PGM header, detect X, Y, number of components, bpp
 	err = read_frame_header(&frame, stream);
 	RETURN_IF(err);
 
 	printf("[DEBUG] header Nf=%" PRIu8 " Y=%" PRIu16 " X=%" PRIu16 " P=%" PRIu8 "\n", frame.components, frame.Y, frame.X, frame.precision);
-
-	struct context *context = malloc(sizeof(struct context));
-
-	err = init_context(context);
-	RETURN_IF(err);
 
 	context->Nf = frame.components;
 	context->Y = frame.Y;
@@ -74,6 +72,21 @@ int process_stream(FILE *stream)
 
 	frame_destroy(&frame);
 
+	return RET_SUCCESS;
+}
+
+int process_stream(FILE *stream)
+{
+	int err;
+
+	struct context *context = malloc(sizeof(struct context));
+
+	err = init_context(context);
+	RETURN_IF(err);
+
+	err = read_image(context, stream);
+	RETURN_IF(err);
+
 	err = conv_frame_to_blocks(context);
 	RETURN_IF(err);
 
@@ -104,7 +117,8 @@ int process_stream(FILE *stream)
 
 int main(int argc, char *argv[])
 {
-	const char *i_path = argc > 1 ? argv[1] : "Lenna.jpg";
+	const char *i_path = argc > 1 ? argv[1] : "Lenna.ppm";
+	const char *o_path = argc > 2 ? argv[2] : "output.jpg";
 
 	FILE *stream = fopen(i_path, "r");
 
