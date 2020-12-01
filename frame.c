@@ -165,6 +165,40 @@ int frame_create(struct context *context, struct frame *frame)
 	return RET_SUCCESS;
 }
 
+int frame_to_ycc(struct frame *frame)
+{
+	assert(frame != NULL);
+
+	int shift = 1 << (frame->precision - 1);
+
+	switch (frame->components) {
+		case 3:
+			for (size_t y = 0; y < frame->Y; ++y) {
+				for (size_t x = 0; x < frame->X; ++x) {
+					float R = frame->data[y * frame->size_x * 3 + x * 3 + 0];
+					float G = frame->data[y * frame->size_x * 3 + x * 3 + 1];
+					float B = frame->data[y * frame->size_x * 3 + x * 3 + 2];
+
+					float Y  = 0.299 * R + 0.587 * G + 0.114 * B;
+					float Cb = - 0.1687 * R - 0.3313 * G + 0.5 * B + shift;
+					float Cr = 0.5 * R - 0.4187 * G - 0.0813 * B + shift;
+
+					frame->data[y * frame->size_x * 3 + x * 3 + 0] = Y;
+					frame->data[y * frame->size_x * 3 + x * 3 + 1] = Cb;
+					frame->data[y * frame->size_x * 3 + x * 3 + 2] = Cr;
+				}
+			}
+			break;
+		case 1:
+			/* nothing to do */
+			break;
+		default:
+			abort();
+	}
+
+	return RET_SUCCESS;
+}
+
 int frame_to_rgb(struct frame *frame)
 {
 	assert(frame != NULL);

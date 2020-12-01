@@ -30,4 +30,6 @@ int read_frame_body(struct frame *frame, FILE *stream);
 
 void transform_frame_to_components(struct context *context, struct frame *frame);
 
+int frame_to_ycc(struct frame *frame);
+
 #endif
