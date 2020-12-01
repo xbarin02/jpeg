@@ -38,13 +38,13 @@ int read_image(struct context *context, FILE *stream)
 		case 3:
 			context->component[1].H = 2;
 			context->component[1].V = 2;
-			context->component[1].Tq = 0;
 			context->component[2].H = 1;
 			context->component[2].V = 1;
-			context->component[1].Tq = 1;
 			context->component[3].H = 1;
 			context->component[3].V = 1;
-			context->component[1].Tq = 1;
+			context->component[1].Tq = 0;
+			context->component[2].Tq = 1;
+			context->component[3].Tq = 1;
 			context->max_H = 2;
 			context->max_V = 2;
 			break;
