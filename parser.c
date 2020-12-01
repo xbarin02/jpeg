@@ -415,6 +415,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 			case 0xffe6:
 			case 0xffe7:
 			case 0xffe8:
+			case 0xffec:
 			case 0xffed:
 			case 0xffee:
 				printf("APP%i\n", marker & 0xf);
