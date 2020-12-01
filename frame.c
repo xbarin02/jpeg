@@ -95,6 +95,56 @@ void transform_components_to_frame(struct context *context, struct frame *frame)
 	}
 }
 
+void transform_frame_to_components(struct context *context, struct frame *frame)
+{
+	assert(context != NULL);
+	assert(frame != NULL);
+
+	size_t size_x = frame->size_x;
+	size_t size_y = frame->size_y;
+
+	// component id
+	int compno = 0;
+
+	for (int i = 0; i < 256; ++i) {
+		if (context->component[i].frame_buffer != NULL) {
+			size_t b_x = context->component[i].b_x;
+			size_t b_y = context->component[i].b_y;
+
+			size_t c_x = b_x * 8;
+			size_t c_y = b_y * 8;
+
+			size_t step_x = size_x / c_x;
+			size_t step_y = size_y / c_y;
+
+			float *buffer = context->component[i].frame_buffer;
+
+			// iterate over component raster (smaller than frame raster)
+			for (size_t y = 0; y < c_y; ++y) {
+				for (size_t x = 0; x < c_x; ++x) {
+					// (i,y,x) to index component
+					// (compno,step*y,step*x) to index frame
+
+					float px = 0.f;
+
+					// copy patch
+					for (size_t yy = 0; yy < step_y; ++yy) {
+						for (size_t xx = 0; xx < step_x; ++xx) {
+							px += frame->data[(step_y * y + yy) * size_x * frame->components + frame->components * (step_x * x + xx) + compno];
+						}
+					}
+
+					px /= step_y * step_x;
+
+					buffer[y * c_x + x] = px;
+				}
+			}
+
+			compno++;
+		}
+	}
+}
+
 int frame_create(struct context *context, struct frame *frame)
 {
 	assert(context != NULL);

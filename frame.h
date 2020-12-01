@@ -28,4 +28,6 @@ int frame_create_empty(struct context *context, struct frame *frame);
 
 int read_frame_body(struct frame *frame, FILE *stream);
 
+void transform_frame_to_components(struct context *context, struct frame *frame);
+
 #endif
