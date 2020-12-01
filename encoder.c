@@ -137,7 +137,7 @@ int produce_SOF0(struct context *context, FILE *stream)
 
 	uint8_t Nf = context->Nf;
 
-	// length = (2) len + 1 (P) + 2 (Y) + 2 (X) + 1 (Nf) + Nf * ( 1 (C) + 1 (H, V) + 1 (Tq) ) = 8 + 3 * Nf
+	// length = 2 (len) + 1 (P) + 2 (Y) + 2 (X) + 1 (Nf) + Nf * ( 1 (C) + 1 (H, V) + 1 (Tq) ) = 8 + 3 * Nf
 	err = write_length(stream, 8 + 3 * Nf);
 	RETURN_IF(err);
 
@@ -166,6 +166,48 @@ int produce_SOF0(struct context *context, FILE *stream)
 	return RET_SUCCESS;
 }
 
+int produce_DHT(struct context *context, uint8_t Tc, uint8_t Th, FILE *stream)
+{
+	int err;
+
+	assert(context != NULL);
+
+	err = write_marker(stream, 0xffc4);
+	RETURN_IF(err);
+
+	struct htable *htable = &context->htable[Tc][Th];
+
+	// compute "mt (V)"
+	uint16_t mt = 0;
+	for (int i = 0; i < 16; ++i) {
+		uint8_t L = htable->L[i];
+		mt += L;
+	}
+
+	// length = 2 (len) + 1 (Tc, Th) + 16 * 1 (L) + mt (V) = 2 + 17 + mt (V)
+	err = write_length(stream, 2 + 17 + mt);
+	RETURN_IF(err);
+
+	err = write_nibbles(stream, Tc, Th);
+	RETURN_IF(err);
+
+	for (int i = 0; i < 16; ++i) {
+		err = write_byte(stream, htable->L[i]);
+		RETURN_IF(err);
+	}
+
+	for (int i = 0; i < 16; ++i) {
+		uint8_t L = htable->L[i];
+
+		for (int l = 0; l < L; ++l) {
+			err = write_byte(stream, htable->V[i][l]);
+			RETURN_IF(err);
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
 int produce_codestream(struct context *context, FILE *stream)
 {
 	int err;
@@ -184,7 +226,15 @@ int produce_codestream(struct context *context, FILE *stream)
 	err = produce_SOF0(context, stream);
 	RETURN_IF(err);
 
-	/* TODO DHT */
+	/* DHT */
+	err = produce_DHT(context, 0, 0, stream);
+	RETURN_IF(err);
+	err = produce_DHT(context, 1, 0, stream);
+	RETURN_IF(err);
+	err = produce_DHT(context, 0, 1, stream);
+	RETURN_IF(err);
+	err = produce_DHT(context, 1, 1, stream);
+	RETURN_IF(err);
 
 	/* TODO SOS */
 
