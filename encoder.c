@@ -75,14 +75,10 @@ int read_image(struct context *context, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int process_stream(FILE *i_stream, FILE *o_stream)
+/* read_image(), conv_frame_to_blocks(), forward_dct(), quantize() */
+int prologue(struct context *context, FILE *i_stream)
 {
 	int err;
-
-	struct context *context = malloc(sizeof(struct context));
-
-	err = init_context(context);
-	RETURN_IF(err);
 
 	err = read_image(context, i_stream);
 	RETURN_IF(err);
@@ -94,6 +90,21 @@ int process_stream(FILE *i_stream, FILE *o_stream)
 	RETURN_IF(err);
 
 	err = quantize(context);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
+int process_stream(FILE *i_stream, FILE *o_stream)
+{
+	int err;
+
+	struct context *context = malloc(sizeof(struct context));
+
+	err = init_context(context);
+	RETURN_IF(err);
+
+	err = prologue(context, i_stream);
 	RETURN_IF(err);
 
 	// TODO
