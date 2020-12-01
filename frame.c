@@ -53,25 +53,18 @@ int frame_create(struct context *context, struct frame *frame)
 	assert(context != NULL);
 	assert(frame != NULL);
 
+	int err;
+
 	frame->components = context->Nf;
 	frame->Y = context->Y;
 	frame->X = context->X;
 	frame->precision = context->P;
 
-	size_t size_x = ceil_div(frame->X, 8 * context->max_H) * 8 * context->max_H;
-	size_t size_y = ceil_div(frame->Y, 8 * context->max_V) * 8 * context->max_V;
+	err = frame_create_empty(context, frame);
+	RETURN_IF(err);
 
-	frame->size_x = size_x;
-	frame->size_y = size_y;
-
-	printf("[DEBUG] frame Nf=%i X=%zu Y=%zu\n", (int)frame->components, size_x, size_y);
-
-	// alloc frame->data[]
-	frame->data = malloc(sizeof(float) * frame->components * size_x * size_y);
-
-	if (frame->data == NULL) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
+	size_t size_x = frame->size_x;
+	size_t size_y = frame->size_y;
 
 	// component id
 	int compno = 0;
