@@ -75,7 +75,7 @@ int read_image(struct context *context, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int process_stream(FILE *stream)
+int process_stream(FILE *i_stream, FILE *o_stream)
 {
 	int err;
 
@@ -84,7 +84,7 @@ int process_stream(FILE *stream)
 	err = init_context(context);
 	RETURN_IF(err);
 
-	err = read_image(context, stream);
+	err = read_image(context, i_stream);
 	RETURN_IF(err);
 
 	err = conv_frame_to_blocks(context);
@@ -120,20 +120,27 @@ int main(int argc, char *argv[])
 	const char *i_path = argc > 1 ? argv[1] : "Lenna.ppm";
 	const char *o_path = argc > 2 ? argv[2] : "output.jpg";
 
-	FILE *stream = fopen(i_path, "r");
+	FILE *i_stream = fopen(i_path, "r");
+	FILE *o_stream = fopen(o_path, "w");
 
-	if (stream == NULL) {
+	if (i_stream == NULL) {
 		fprintf(stderr, "fopen failure\n");
 		return 1;
 	}
 
-	int err = process_stream(stream);
+	if (o_stream == NULL) {
+		fprintf(stderr, "fopen failure\n");
+		return 1;
+	}
+
+	int err = process_stream(i_stream, o_stream);
 
 	if (err) {
 		fprintf(stderr, "Failure.\n");
 	}
 
-	fclose(stream);
+	fclose(o_stream);
+	fclose(i_stream);
 
 	return 0;
 }
