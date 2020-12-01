@@ -40,6 +40,52 @@ int next_bit(struct bits *bits, uint8_t *bit)
 	return RET_SUCCESS;
 }
 
+int put_bit(struct bits *bits, uint8_t bit)
+{
+	assert(bits != NULL);
+	assert(bits->count < 8);
+
+	bits->byte <<= 1;
+	bits->byte |= bit & 1;
+
+	bits->count++;
+
+	if (bits->count == 8) {
+		int err;
+
+		err = write_ecs_byte(bits->stream, bits->byte);
+		RETURN_IF(err);
+
+		bits->count = 0;
+	}
+
+	return RET_SUCCESS;
+}
+
+int flush_bits(struct bits *bits)
+{
+	int err;
+
+	assert(bits != NULL);
+
+	if (bits->count == 0) {
+		return RET_SUCCESS;
+	}
+
+	while (bits->count < 8) {
+		bits->byte <<= 1;
+		bits->byte |= 1;
+		bits->count++;
+	}
+
+	err = write_ecs_byte(bits->stream, bits->byte);
+	RETURN_IF(err);
+
+	bits->count = 0;
+
+	return RET_SUCCESS;
+}
+
 int read_byte(FILE *stream, uint8_t *byte)
 {
 	if (fread(byte, sizeof(uint8_t), 1, stream) != 1) {
@@ -225,4 +271,20 @@ int read_ecs_byte(FILE *stream, uint8_t *byte)
 		*byte = b;
 		return RET_SUCCESS;
 	}
+}
+
+/* B.1.1.5 Entropy-coded data segments */
+int write_ecs_byte(FILE *stream, uint8_t byte)
+{
+	int err;
+
+	err = write_byte(stream, byte);
+	RETURN_IF(err);
+
+	if (byte == 0xff) {
+		err = write_byte(stream, 0x00);
+		RETURN_IF(err);
+	}
+
+	return RET_SUCCESS;
 }
