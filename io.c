@@ -49,6 +49,15 @@ int read_byte(FILE *stream, uint8_t *byte)
 	return RET_SUCCESS;
 }
 
+int write_byte(FILE *stream, uint8_t byte)
+{
+	if (fwrite(&byte, sizeof(uint8_t), 1, stream) != 1) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	return RET_SUCCESS;
+}
+
 int read_word(FILE *stream, uint16_t *word)
 {
 	uint16_t w;
@@ -130,6 +139,21 @@ int read_marker(FILE *stream, uint16_t *marker)
 				return RET_SUCCESS;
 		}
 	} while (1);
+}
+
+int write_marker(FILE *stream, uint16_t marker)
+{
+	int err;
+
+	assert((marker >> 8) == 0xff);
+
+	err = write_byte(stream, 0xff);
+	RETURN_IF(err);
+
+	err = write_byte(stream, (uint8_t)marker);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
 }
 
 int skip_segment(FILE *stream, uint16_t len)
