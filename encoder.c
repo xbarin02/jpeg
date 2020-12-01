@@ -95,6 +95,62 @@ int prologue(struct context *context, FILE *i_stream)
 	return RET_SUCCESS;
 }
 
+int produce_DQT(struct context *context, uint8_t Tq, FILE *stream)
+{
+	int err;
+
+	err = write_marker(stream, 0xffdb);
+	RETURN_IF(err);
+
+	// length = 2 (len) + 1 (Pq, Tq) + 64 (Q[]) = 67
+	err = write_length(stream, 67);
+	RETURN_IF(err);
+
+	uint8_t Pq;
+	Pq = 0;
+
+	err = write_nibbles(stream, Pq, Tq);
+	RETURN_IF(err);
+
+	struct qtable *qtable = &context->qtable[Tq];
+
+	for (int i = 0; i < 64; ++i) {
+		uint8_t byte = (uint8_t)qtable->Q[zigzag[i]];
+
+		err = write_byte(stream, byte);
+		RETURN_IF(err);
+	}
+
+	return RET_SUCCESS;
+}
+
+int produce_codestream(struct context *context, FILE *stream)
+{
+	int err;
+
+	/* SOI */
+	err = write_marker(stream, 0xffd8);
+	RETURN_IF(err);
+
+	/* DQT */
+	err = produce_DQT(context, 0, stream);
+	RETURN_IF(err);
+	err = produce_DQT(context, 1, stream);
+	RETURN_IF(err);
+
+	/* TODO SOF0 */
+
+	/* TODO DHT */
+
+	/* TODO SOS */
+
+	/* TODO loop over macroblocks */
+
+	/* TODO EOI */
+
+	return RET_SUCCESS;
+}
+
 int process_stream(FILE *i_stream, FILE *o_stream)
 {
 	int err;
@@ -105,6 +161,9 @@ int process_stream(FILE *i_stream, FILE *o_stream)
 	RETURN_IF(err);
 
 	err = prologue(context, i_stream);
+	RETURN_IF(err);
+
+	err = produce_codestream(context, o_stream);
 	RETURN_IF(err);
 
 	// TODO
