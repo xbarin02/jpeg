@@ -13,6 +13,8 @@ int invert_dct(struct context *context);
 
 int conv_blocks_to_frame(struct context *context);
 
+int conv_frame_to_blocks(struct context *context);
+
 int write_image(struct context *context, const char *path);
 
 #endif
