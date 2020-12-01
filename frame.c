@@ -288,7 +288,6 @@ uint8_t convert_maxval_to_precision(int maxval)
 	return floor_log2((unsigned)maxval) + 1;
 }
 
-/* TODO fill image borders with padding lines/columns */
 int read_frame_body(struct frame *frame, FILE *stream)
 {
 	assert(frame != NULL);
@@ -320,6 +319,13 @@ int read_frame_body(struct frame *frame, FILE *stream)
 						frame->data[y * frame->size_x * Nf + x * Nf + c] = (float)*line_++;
 					}
 				}
+				/* padding */
+				for (size_t x = width; x < frame->size_x; ++x) {
+					for (int c = 0; c < components; ++c) {
+						frame->data[y * frame->size_x * Nf + x * Nf + c] =
+							frame->data[y * frame->size_x * Nf + (width - 1) * Nf + c];
+					}
+				}
 				break;
 			}
 			case sizeof(uint16_t): {
@@ -329,10 +335,26 @@ int read_frame_body(struct frame *frame, FILE *stream)
 						frame->data[y * frame->size_x * Nf + x * Nf + c] = (float)ntohs(*line_++);
 					}
 				}
+				/* padding */
+				for (size_t x = width; x < frame->size_x; ++x) {
+					for (int c = 0; c < components; ++c) {
+						frame->data[y * frame->size_x * Nf + x * Nf + c] =
+							frame->data[y * frame->size_x * Nf + (width - 1) * Nf + c];
+					}
+				}
 				break;
 			}
 			default:
 				return RET_FAILURE_LOGIC_ERROR;
+		}
+	}
+	/* padding */
+	for (size_t y = height; y < frame->size_y; ++y) {
+		for (size_t x = 0; x < frame->size_x; ++x) {
+			for (int c = 0; c < components; ++c) {
+				frame->data[y * frame->size_x * Nf + x * Nf + c] =
+					frame->data[(height - 1) * frame->size_x * Nf + x * Nf + c];
+			}
 		}
 	}
 
