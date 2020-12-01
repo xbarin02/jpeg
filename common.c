@@ -13,7 +13,7 @@ int init_qtable(struct qtable *qtable)
 	qtable->Pq = 0;
 
 	for (int i = 0; i < 64; ++i) {
-		qtable->Q[i] = 0;
+		qtable->Q[i] = 1;
 	}
 
 	return RET_SUCCESS;
