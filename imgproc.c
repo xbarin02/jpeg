@@ -19,6 +19,17 @@ void dequantize_block(struct int_block *int_block, struct flt_block *flt_block, 
 	}
 }
 
+void quantize_block(struct int_block *int_block, struct flt_block *flt_block, struct qtable *qtable)
+{
+	assert(int_block != NULL);
+	assert(flt_block != NULL);
+	assert(qtable != NULL);
+
+	for (int j = 0; j < 64; ++j) {
+		int_block->c[j] = (int32_t)roundf(flt_block->c[j] / (float)qtable->Q[j]);
+	}
+}
+
 int dequantize(struct context *context)
 {
 	assert(context != NULL);
@@ -38,6 +49,32 @@ int dequantize(struct context *context)
 				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
 
 				dequantize_block(int_block, flt_block, qtable);
+			}
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+int quantize(struct context *context)
+{
+	assert(context != NULL);
+
+	for (int i = 0; i < 256; ++i) {
+		if (context->component[i].int_buffer != NULL) {
+			printf("Quantizing component %i...\n", i);
+
+			size_t blocks = context->component[i].b_x * context->component[i].b_y;
+
+			uint8_t Tq = context->component[i].Tq;
+			struct qtable *qtable = &context->qtable[Tq];
+
+			// for each block, for each coefficient, c[] *= Q[]
+			for (size_t b = 0; b < blocks; ++b) {
+				struct int_block *int_block = &context->component[i].int_buffer[b];
+				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
+
+				quantize_block(int_block, flt_block, qtable);
 			}
 		}
 	}
