@@ -48,20 +48,11 @@ int frame_create_empty(struct context *context, struct frame *frame)
 	return RET_SUCCESS;
 }
 
-int frame_create(struct context *context, struct frame *frame)
+// context->component[].frame_buffer[] => frame->data[]
+void transform_components_to_frame(struct context *context, struct frame *frame)
 {
 	assert(context != NULL);
 	assert(frame != NULL);
-
-	int err;
-
-	frame->components = context->Nf;
-	frame->Y = context->Y;
-	frame->X = context->X;
-	frame->precision = context->P;
-
-	err = frame_create_empty(context, frame);
-	RETURN_IF(err);
 
 	size_t size_x = frame->size_x;
 	size_t size_y = frame->size_y;
@@ -102,6 +93,24 @@ int frame_create(struct context *context, struct frame *frame)
 			compno++;
 		}
 	}
+}
+
+int frame_create(struct context *context, struct frame *frame)
+{
+	assert(context != NULL);
+	assert(frame != NULL);
+
+	int err;
+
+	frame->components = context->Nf;
+	frame->Y = context->Y;
+	frame->X = context->X;
+	frame->precision = context->P;
+
+	err = frame_create_empty(context, frame);
+	RETURN_IF(err);
+
+	transform_components_to_frame(context, frame);
 
 	return RET_SUCCESS;
 }
