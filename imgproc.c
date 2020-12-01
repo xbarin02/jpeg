@@ -78,6 +78,19 @@ void idct1(const float in[8], float out[8], size_t stride)
 	}
 }
 
+void fdct1(const float in[8], float out[8], size_t stride)
+{
+	for (int u = 0; u < 8; ++u) {
+		float s = 0.f;
+
+		for (int x = 0; x < 8; ++x) {
+			s += in[x * stride] * lut[x][u];
+		}
+
+		out[u * stride] = s;
+	}
+}
+
 void idct(struct flt_block *flt_block)
 {
 	static int init = 0;
@@ -99,7 +112,28 @@ void idct(struct flt_block *flt_block)
 	}
 }
 
-int invert_dct(struct context *context)
+void fdct(struct flt_block *flt_block)
+{
+	static int init = 0;
+
+	// init look-up table
+	if (init == 0) {
+		init_lut();
+		init = 1;
+	}
+
+	struct flt_block b;
+
+	for (int y = 0; y < 8; ++y) {
+		fdct1(&flt_block->c[y * 8], &b.c[y * 8], 1);
+	}
+
+	for (int x = 0; x < 8; ++x) {
+		fdct1(&b.c[x], &flt_block->c[x], 8);
+	}
+}
+
+int inverse_dct(struct context *context)
 {
 	assert(context != NULL);
 
@@ -122,6 +156,36 @@ int invert_dct(struct context *context)
 				for (int j = 0; j < 64; ++j) {
 					flt_block->c[j] += shift;
 				}
+			}
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+int forward_dct(struct context *context)
+{
+	assert(context != NULL);
+
+	/* precision */
+	uint8_t P = context->P;
+	int shift = 1 << (P - 1);
+
+	for (int i = 0; i < 256; ++i) {
+		if (context->component[i].int_buffer != NULL) {
+			printf("FDCT on component %i...\n", i);
+
+			size_t blocks = context->component[i].b_x * context->component[i].b_y;
+
+			for (size_t b = 0; b < blocks; ++b) {
+				struct flt_block *flt_block = &context->component[i].flt_buffer[b];
+
+				// level shift
+				for (int j = 0; j < 64; ++j) {
+					flt_block->c[j] -= shift;
+				}
+
+				fdct(flt_block);
 			}
 		}
 	}

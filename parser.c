@@ -518,7 +518,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 				}
 				err = dequantize(context);
 				RETURN_IF(err);
-				err = invert_dct(context);
+				err = inverse_dct(context);
 				RETURN_IF(err);
 				err = conv_blocks_to_frame(context);
 				RETURN_IF(err);
