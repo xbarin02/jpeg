@@ -75,11 +75,32 @@ int read_word(FILE *stream, uint16_t *word)
 	return RET_SUCCESS;
 }
 
+int write_word(FILE *stream, uint16_t word)
+{
+	word = htons(word);
+
+	if (fwrite(&word, sizeof(uint16_t), 1, stream) != 1) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	return RET_SUCCESS;
+}
+
 int read_length(FILE *stream, uint16_t *len)
 {
 	int err;
 
 	err = read_word(stream, len);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
+int write_length(FILE *stream, uint16_t len)
+{
+	int err;
+
+	err = write_word(stream, len);
 	RETURN_IF(err);
 
 	return RET_SUCCESS;
