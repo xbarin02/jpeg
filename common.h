@@ -159,4 +159,6 @@ void free_buffers(struct context *context);
 
 size_t ceil_div(size_t n, size_t d);
 
+int compute_no_blocks_and_alloc_buffers(struct context *context);
+
 #endif

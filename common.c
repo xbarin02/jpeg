@@ -142,3 +142,44 @@ void free_buffers(struct context *context)
 		free(context->component[i].frame_buffer);
 	}
 }
+
+int compute_no_blocks_and_alloc_buffers(struct context *context)
+{
+	assert(context != NULL);
+
+	int err;
+
+	uint16_t Y, X;
+	uint8_t max_H, max_V;
+
+	Y = context->Y;
+	X = context->X;
+
+	max_H = context->max_H;
+	max_V = context->max_V;
+
+	context->m_x = ceil_div(X, 8 * max_H);
+	context->m_y = ceil_div(Y, 8 * max_V);
+
+	printf("[DEBUG] expecting %zu macroblocks\n", context->m_x * context->m_y);
+
+	for (int i = 0; i < 256; ++i) {
+		uint8_t H, V;
+		H = context->component[i].H;
+		V = context->component[i].V;
+		if (H != 0) {
+			size_t b_x = ceil_div(X, 8 * max_H) * H;
+			size_t b_y = ceil_div(Y, 8 * max_V) * V;
+
+			context->component[i].b_x = b_x;
+			context->component[i].b_y = b_y;
+
+			printf("[DEBUG] C = %i: %zu blocks (x=%zu y=%zu)\n", i, b_x * b_y, b_x, b_y);
+
+			err = alloc_buffers(&context->component[i], b_x * b_y);
+			RETURN_IF(err);
+		}
+	}
+
+	return RET_SUCCESS;
+}
