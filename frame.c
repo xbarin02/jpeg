@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 #include "frame.h"
 
 int clamp(int min, int val, int max)
@@ -29,6 +30,29 @@ void frame_destroy(struct frame *frame)
 	free(frame->data);
 }
 
+int frame_create_empty(struct context *context, struct frame *frame)
+{
+	assert(context != NULL);
+	assert(frame != NULL);
+
+	size_t size_x = ceil_div(frame->X, 8 * context->max_H) * 8 * context->max_H;
+	size_t size_y = ceil_div(frame->Y, 8 * context->max_V) * 8 * context->max_V;
+
+	frame->size_x = size_x;
+	frame->size_y = size_y;
+
+	printf("[DEBUG] frame Nf=%i X=%zu Y=%zu\n", (int)frame->components, size_x, size_y);
+
+	// alloc frame->data[]
+	frame->data = malloc(sizeof(float) * frame->components * size_x * size_y);
+
+	if (frame->data == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	return RET_SUCCESS;
+}
+
 int frame_create(struct context *context, struct frame *frame)
 {
 	assert(context != NULL);
@@ -45,7 +69,7 @@ int frame_create(struct context *context, struct frame *frame)
 	frame->size_x = size_x;
 	frame->size_y = size_y;
 
-	printf("[DEBUG] frame components=%i X=%zu Y=%zu\n", (int)frame->components, size_x, size_y);
+	printf("[DEBUG] frame Nf=%i X=%zu Y=%zu\n", (int)frame->components, size_x, size_y);
 
 	// alloc frame->data[]
 	frame->data = malloc(sizeof(float) * frame->components * size_x * size_y);
@@ -165,6 +189,77 @@ size_t convert_maxval_to_sample_size(int maxval)
 	return 0;
 }
 
+uint8_t floor_log2(unsigned n)
+{
+	unsigned r = 0;
+
+	while (n >>= 1) {
+		r++;
+	}
+
+	return r;
+}
+
+uint8_t convert_maxval_to_precision(int maxval)
+{
+	assert(maxval > 0);
+
+	return floor_log2((unsigned)maxval) + 1;
+}
+
+/* TODO fill image borders with padding lines/columns */
+int read_frame_body(struct frame *frame, FILE *stream)
+{
+	assert(frame != NULL);
+
+	uint8_t Nf = frame->components;
+	int maxval = (1 << frame->precision) - 1;
+	size_t sample_size = convert_maxval_to_sample_size(maxval);
+	int components = frame->components;
+	size_t width = (size_t)frame->X;
+	size_t height = (size_t)frame->Y;
+	size_t line_size = sample_size * components * width;
+
+	void *line = malloc(line_size);
+
+	if (line == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	for (size_t y = 0; y < height; ++y) {
+		if (fread(line, 1, line_size, stream) < line_size) {
+			free(line);
+			return RET_FAILURE_FILE_IO;
+		}
+		switch (sample_size) {
+			case sizeof(uint8_t): {
+				uint8_t *line_ = line;
+				for (size_t x = 0; x < width; ++x) {
+					for (int c = 0; c < components; ++c) {
+						frame->data[y * frame->size_x * Nf + x * Nf + c] = (float)*line_++;
+					}
+				}
+				break;
+			}
+			case sizeof(uint16_t): {
+				uint16_t *line_ = line;
+				for (size_t x = 0; x < width; ++x) {
+					for (int c = 0; c < components; ++c) {
+						frame->data[y * frame->size_x * Nf + x * Nf + c] = (float)ntohs(*line_++);
+					}
+				}
+				break;
+			}
+			default:
+				return RET_FAILURE_LOGIC_ERROR;
+		}
+	}
+
+	free(line);
+
+	return RET_SUCCESS;
+}
+
 int write_frame_body(struct frame *frame, int components, FILE *stream)
 {
 	assert(frame != NULL);
@@ -239,6 +334,99 @@ int write_frame_header(struct frame *frame, int components, FILE *stream)
 		default:
 			return RET_FAILURE_FILE_UNSUPPORTED;
 	}
+
+	return RET_SUCCESS;
+}
+
+int stream_skip_comment(FILE *stream)
+{
+	int c;
+
+	/* look ahead for a comment, ungetc */
+	while ((c = getc(stream)) == '#') {
+		char com[4096];
+		if (NULL == fgets(com, 4096, stream))
+			return RET_FAILURE_FILE_IO;
+	}
+
+	if (EOF == ungetc(c, stream))
+		return RET_FAILURE_FILE_IO;
+
+	return RET_SUCCESS;
+}
+
+int read_frame_header(struct frame *frame, FILE *stream)
+{
+	char magic[2];
+	int maxval;
+	uint16_t height, width;
+	uint8_t precision;
+	uint8_t components;
+
+	if (fscanf(stream, "%c%c ", magic, magic + 1) != 2) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (magic[0] != 'P') {
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	switch (magic[1]) {
+		case '5':
+			components = 1;
+			break;
+		case '6':
+			components = 3;
+			break;
+		default:
+			return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	if (stream_skip_comment(stream)) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (fscanf(stream, " %" SCNu16 " ", &width) != 1) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (stream_skip_comment(stream)) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (fscanf(stream, " %" SCNu16 " ", &height) != 1) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (stream_skip_comment(stream)) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (fscanf(stream, " %i", &maxval) != 1) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	precision = convert_maxval_to_precision(maxval);
+
+	if (precision > 16) {
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	if (stream_skip_comment(stream)) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (!isspace(fgetc(stream))) {
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	/* fill the struct */
+	assert(frame != NULL);
+
+	frame->components = components;
+	frame->Y = height;
+	frame->X = width;
+	frame->precision = precision;
 
 	return RET_SUCCESS;
 }

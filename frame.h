@@ -22,4 +22,10 @@ int frame_to_rgb(struct frame *frame);
 
 int write_frame(struct frame *frame, const char *path);
 
+int read_frame_header(struct frame *frame, FILE *stream);
+
+int frame_create_empty(struct context *context, struct frame *frame);
+
+int read_frame_body(struct frame *frame, FILE *stream);
+
 #endif
