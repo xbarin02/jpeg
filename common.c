@@ -1,8 +1,10 @@
 #include <stddef.h>
+#include <stdlib.h>
 #include <assert.h>
 #include "common.h"
 #include "mjpeg.h"
 #include "huffman.h"
+#include "coeffs.h"
 
 int init_qtable(struct qtable *qtable)
 {
@@ -101,4 +103,42 @@ int init_context(struct context *context)
 	context->mblocks = 0;
 
 	return RET_SUCCESS;
+}
+
+size_t ceil_div(size_t n, size_t d)
+{
+	return (n + (d - 1)) / d;
+}
+
+int alloc_buffers(struct component *component, size_t size)
+{
+	component->int_buffer = malloc(sizeof(struct int_block) * size);
+
+	if (component->int_buffer == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	component->flt_buffer = malloc(sizeof(struct flt_block) * size);
+
+	if (component->flt_buffer == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	component->frame_buffer = malloc(sizeof(float) * 64 * size);
+
+	if (component->frame_buffer == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	return RET_SUCCESS;
+}
+
+void free_buffers(struct context *context)
+{
+	for (int i = 0; i < 256; ++i) {
+		free(context->component[i].int_buffer);
+		free(context->component[i].flt_buffer);
+
+		free(context->component[i].frame_buffer);
+	}
 }

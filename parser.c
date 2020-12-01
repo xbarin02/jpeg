@@ -62,34 +62,6 @@ int parse_qtable(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
-int alloc_buffers(struct component *component, size_t size)
-{
-	component->int_buffer = malloc(sizeof(struct int_block) * size);
-
-	if (component->int_buffer == NULL) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	component->flt_buffer = malloc(sizeof(struct flt_block) * size);
-
-	if (component->flt_buffer == NULL) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	component->frame_buffer = malloc(sizeof(float) * 64 * size);
-
-	if (component->frame_buffer == NULL) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	return RET_SUCCESS;
-}
-
-static size_t ceil_div(size_t n, size_t d)
-{
-	return (n + (d - 1)) / d;
-}
-
 int parse_frame_header(FILE *stream, struct context *context)
 {
 	int err;
@@ -605,16 +577,6 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 				fprintf(stderr, "unhandled marker 0x%" PRIx16 "\n", marker);
 				return RET_FAILURE_FILE_UNSUPPORTED;
 		}
-	}
-}
-
-void free_buffers(struct context *context)
-{
-	for (int i = 0; i < 256; ++i) {
-		free(context->component[i].int_buffer);
-		free(context->component[i].flt_buffer);
-
-		free(context->component[i].frame_buffer);
 	}
 }
 

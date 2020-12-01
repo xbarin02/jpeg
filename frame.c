@@ -20,11 +20,6 @@ int clamp(int min, int val, int max)
 	return val;
 }
 
-static size_t ceil_div(size_t n, size_t d)
-{
-	return (n + (d - 1)) / d;
-}
-
 void frame_destroy(struct frame *frame)
 {
 	free(frame->data);

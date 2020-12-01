@@ -153,4 +153,10 @@ int init_htable(struct htable *htable);
 
 int init_context(struct context *context);
 
+int alloc_buffers(struct component *component, size_t size);
+
+void free_buffers(struct context *context);
+
+size_t ceil_div(size_t n, size_t d);
+
 #endif
