@@ -65,7 +65,7 @@ void init_lut()
 	}
 }
 
-void dct1(const float in[8], float out[8], size_t stride)
+void idct1(const float in[8], float out[8], size_t stride)
 {
 	for (int x = 0; x < 8; ++x) {
 		float s = 0.f;
@@ -91,11 +91,11 @@ void idct(struct flt_block *flt_block)
 	struct flt_block b;
 
 	for (int y = 0; y < 8; ++y) {
-		dct1(&flt_block->c[y * 8], &b.c[y * 8], 1);
+		idct1(&flt_block->c[y * 8], &b.c[y * 8], 1);
 	}
 
 	for (int x = 0; x < 8; ++x) {
-		dct1(&b.c[x], &flt_block->c[x], 8);
+		idct1(&b.c[x], &flt_block->c[x], 8);
 	}
 }
 
