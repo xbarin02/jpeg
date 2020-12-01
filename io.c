@@ -124,6 +124,17 @@ int read_nibbles(FILE *stream, uint8_t *first, uint8_t *second)
 	return RET_SUCCESS;
 }
 
+int write_nibbles(FILE *stream, uint8_t first, uint8_t second)
+{
+	int err;
+	uint8_t byte = (first << 4) | (second & 15);
+
+	err = write_byte(stream, byte);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
 /* B.1.1.2 Markers
  * All markers are assigned two-byte codes */
 int read_marker(FILE *stream, uint16_t *marker)
