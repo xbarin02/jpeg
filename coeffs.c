@@ -42,6 +42,41 @@ int32_t decode_coeff(uint8_t cat, uint16_t extra)
 	}
 }
 
+/*
+ * uint8_t cat = encode_cat(c);
+ * uint16_t extra = encode_extra(c, cat);
+ *
+ * c = decode_coeff(cat, extra);
+ */
+uint8_t encode_cat(int32_t c)
+{
+	if (c == 0) {
+		return 0;
+	}
+
+	if (c < 0) {
+		c = -c;
+	}
+
+	uint8_t r = 0;
+
+	do {
+		c >>= 1;
+		r++;
+	} while (c != 0);
+
+	return r;
+}
+
+uint16_t encode_extra(int32_t c, uint8_t cat)
+{
+	if (c < 0) {
+		c--;
+	}
+
+	return (uint16_t)(c & ((UINT32_C(1) << cat) - 1));
+}
+
 // read_code + read_extra_bits + compose the coefficient value
 int read_dc(struct bits *bits, struct hcode *hcode_dc, struct coeff_dc *coeff_dc)
 {
