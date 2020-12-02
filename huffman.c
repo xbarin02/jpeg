@@ -249,3 +249,16 @@ int read_extra_bits(struct bits *bits, uint8_t count, uint16_t *value)
 
 	return RET_SUCCESS;
 }
+
+int write_extra_bits(struct bits *bits, uint8_t count, uint16_t value)
+{
+	int err;
+
+	for (int s = count - 1; s >= 0; --s) {
+		uint8_t bit = (value >> s) & 1;
+		err = put_bit(bits, bit);
+		RETURN_IF(err);
+	}
+
+	return RET_SUCCESS;
+}
