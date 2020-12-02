@@ -42,9 +42,18 @@ int read_image(struct context *context, FILE *stream)
 			context->component[2].V = 1;
 			context->component[3].H = 1;
 			context->component[3].V = 1;
+
 			context->component[1].Tq = 0;
 			context->component[2].Tq = 1;
 			context->component[3].Tq = 1;
+
+			context->component[1].Td = 0;
+			context->component[1].Ta = 0;
+			context->component[2].Td = 1;
+			context->component[2].Ta = 1;
+			context->component[3].Td = 1;
+			context->component[3].Ta = 1;
+
 			context->max_H = 2;
 			context->max_V = 2;
 			break;
@@ -208,6 +217,74 @@ int produce_DHT(struct context *context, uint8_t Tc, uint8_t Th, FILE *stream)
 	return RET_SUCCESS;
 }
 
+struct scan {
+	uint8_t Ns;
+	uint8_t Cs[256];
+
+	/* useful to remove differential DC coding
+	 *
+	 * At the beginning of the scan and at the beginning of each restart interval, the prediction for the DC coefficient prediction
+	 * is initialized to 0. */
+	struct int_block *last_block[256];
+};
+
+int produce_SOS(struct context *context, FILE *stream, struct scan *scan)
+{
+	int err;
+
+	assert(context != NULL);
+	assert(scan != NULL);
+
+	err = write_marker(stream, 0xffda);
+	RETURN_IF(err);
+
+	uint8_t Ns = context->Nf;
+
+	/* Number of image components in scan = Number of image components in frame */
+	scan->Ns = Ns;
+
+	// length = 2 (len) + 1 (Ns) + Ns * (1 (Cs) + 1 (Td, Ta)) + 1 (Ss) + 1 (Se) + 1 (Ah, Al) = 6 + 2 * Ns
+	err = write_length(stream, 6 + 2 * Ns);
+	RETURN_IF(err);
+
+	for (int j = 0, i = 0; i < 256; ++i) {
+		if (context->component[i].H != 0) {
+			scan->Cs[j++] = i;
+		}
+	}
+
+	err = write_byte(stream, Ns);
+	RETURN_IF(err);
+
+	for (int j = 0; j < Ns; ++j) {
+		uint8_t Cs;
+		uint8_t Td, Ta;
+
+		Cs = scan->Cs[j];
+		Td = context->component[Cs].Td;
+		Ta = context->component[Cs].Ta;
+
+		err = write_byte(stream, scan->Cs[j]);
+		RETURN_IF(err);
+
+		err = write_nibbles(stream, Td, Ta);
+		RETURN_IF(err);
+	}
+
+	uint8_t Ss = 0;
+	uint8_t Se = 63;
+	uint8_t Ah = 0, Al = 0;
+
+	err = write_byte(stream, Ss);
+	RETURN_IF(err);
+	err = write_byte(stream, Se);
+	RETURN_IF(err);
+	err = write_nibbles(stream, Ah, Al);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
 int produce_codestream(struct context *context, FILE *stream)
 {
 	int err;
@@ -236,7 +313,11 @@ int produce_codestream(struct context *context, FILE *stream)
 	err = produce_DHT(context, 1, 1, stream);
 	RETURN_IF(err);
 
-	/* TODO SOS */
+	struct scan scan;
+
+	/* SOS */
+	err = produce_SOS(context, stream, &scan);
+	RETURN_IF(err);
 
 	/* TODO loop over macroblocks */
 
