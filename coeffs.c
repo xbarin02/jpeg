@@ -151,3 +151,8 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct in
 
 	return RET_SUCCESS;
 }
+
+int write_block(struct bits *bits, struct context *context, uint8_t Cs, struct int_block *int_block)
+{
+	/* TODO */
+}
