@@ -28,6 +28,19 @@ int vlc_add_bit(struct vlc *vlc, uint16_t bit)
 	return RET_SUCCESS;
 }
 
+int vlc_remove_bit(struct vlc *vlc, uint16_t *bit)
+{
+	assert(vlc != NULL);
+	assert(bit != NULL);
+
+	*bit = (vlc->code >> (vlc->size - 1)) & 1;
+
+	vlc->code >>= 1;
+	vlc->size--;
+
+	return RET_SUCCESS;
+}
+
 /* Figure C.1 – Generation of table of Huffman code sizes */
 int generate_size_table(struct htable *htable, struct hcode *hcode)
 {
@@ -252,8 +265,30 @@ int read_code(struct bits *bits, struct hcode *hcode, uint8_t *value)
 		uint8_t bit;
 		err = next_bit(bits, &bit);
 		RETURN_IF(err);
-		vlc_add_bit(&vlc, (uint16_t)bit); // add this bit to VLC
+		err = vlc_add_bit(&vlc, (uint16_t)bit); // add this bit to VLC
+		RETURN_IF(err);
 	} while (query_code(&vlc, hcode, value) == -1); // query Huffman table
+
+	return RET_SUCCESS;
+}
+
+/* inverse of read_code() */
+int write_code(struct bits *bits, struct hcode *hcode, uint8_t value)
+{
+	int err;
+	struct vlc vlc;
+
+	err = value_to_vlc(&vlc, hcode, value);
+	RETURN_IF(err);
+
+	/* send bits */
+	while (vlc.size != 0) {
+		uint16_t bit;
+		err = vlc_remove_bit(&vlc, &bit);
+		RETURN_IF(err);
+		err = put_bit(bits, (uint8_t)bit);
+		RETURN_IF(err);
+	}
 
 	return RET_SUCCESS;
 }
