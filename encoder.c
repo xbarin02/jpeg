@@ -104,6 +104,16 @@ int prologue(struct context *context, FILE *i_stream)
 	return RET_SUCCESS;
 }
 
+int produce_SOI(FILE *stream)
+{
+	int err;
+
+	err = write_marker(stream, 0xffd8);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
 int produce_DQT(struct context *context, uint8_t Tq, FILE *stream)
 {
 	int err;
@@ -285,12 +295,22 @@ int produce_SOS(struct context *context, FILE *stream, struct scan *scan)
 	return RET_SUCCESS;
 }
 
+int produce_EOI(FILE *stream)
+{
+	int err;
+
+	err = write_marker(stream, 0xffd9);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
 int produce_codestream(struct context *context, FILE *stream)
 {
 	int err;
 
 	/* SOI */
-	err = write_marker(stream, 0xffd8);
+	err = produce_SOI(stream);
 	RETURN_IF(err);
 
 	/* DQT */
@@ -321,7 +341,9 @@ int produce_codestream(struct context *context, FILE *stream)
 
 	/* TODO loop over macroblocks */
 
-	/* TODO EOI */
+	/* EOI */
+	err = produce_EOI(stream);
+	RETURN_IF(err);
 
 	return RET_SUCCESS;
 }
