@@ -213,6 +213,34 @@ int query_code(struct vlc *vlc, struct hcode *hcode, uint8_t *value)
 	return -1; /* not found */
 }
 
+/* transform value to (code, size), inverse of query_code() */
+int value_to_vlc(struct vlc *vlc, struct hcode *hcode, uint8_t value)
+{
+	assert(vlc != NULL);
+	assert(hcode != NULL);
+
+#define HUFFVAL(K)  (hcode->huff_val[(K)])
+#define LASTK       (hcode->last_k)
+#define HUFFSIZE(K) (hcode->huff_size[(K)])
+#define HUFFCODE(K) (hcode->huff_code[(K)])
+
+	for (size_t K = 0; K < LASTK; ++K) {
+		if (value == HUFFVAL(K)) {
+			vlc->size = HUFFSIZE(K);
+			vlc->code = HUFFCODE(K);
+
+			return RET_SUCCESS;
+		}
+	}
+
+#undef HUFFVAL
+#undef LASTK
+#undef HUFFSIZE
+#undef HUFFCODE
+
+	return -1; /* not found */
+}
+
 int read_code(struct bits *bits, struct hcode *hcode, uint8_t *value)
 {
 	int err;
