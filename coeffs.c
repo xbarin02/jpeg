@@ -101,6 +101,25 @@ int read_dc(struct bits *bits, struct hcode *hcode_dc, struct coeff_dc *coeff_dc
 	return RET_SUCCESS;
 }
 
+// encode_cat(), encode_extra(), write_code(), write_extra_bits()
+int write_dc(struct bits *bits, struct hcode *hcode_dc, struct coeff_dc *coeff_dc)
+{
+	int err;
+
+	assert(coeff_dc != NULL);
+
+	uint8_t cat = encode_cat(coeff_dc->c);
+	uint16_t extra = encode_extra(coeff_dc->c, cat);
+
+	err = write_code(bits, hcode_dc, cat);
+	RETURN_IF(err);
+
+	err = write_extra_bits(bits, cat, extra);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
 int read_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_ac)
 {
 	int err;
