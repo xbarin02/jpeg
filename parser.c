@@ -391,6 +391,8 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 {
 	int err;
 
+	struct scan scan;
+
 	while (1) {
 		uint16_t marker;
 
@@ -402,7 +404,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 		switch (marker) {
 			uint16_t len;
 			long pos;
-			struct scan scan;
+
 			/* SOI* Start of image */
 			case 0xffd8:
 				printf("SOI\n");
