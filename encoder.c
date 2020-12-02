@@ -345,11 +345,16 @@ int write_macroblock(struct bits *bits, struct context *context, struct scan *sc
 					int_block->c[0] -= scan->last_block[Cs]->c[0];
 				}
 
-// 				assert(int_block->c[0] >= -2047 && int_block->c[0] <= +2047);
+				assert(int_block->c[0] >= -2047 && int_block->c[0] <= +2047);
 
 				/* write block */
 				err = write_block(bits, context, Cs, int_block);
 				RETURN_IF(err);
+
+				// revert back
+				if (scan->last_block[Cs] != NULL) {
+					int_block->c[0] += scan->last_block[Cs]->c[0];
+				}
 
 				scan->last_block[Cs] = int_block;
 			}
