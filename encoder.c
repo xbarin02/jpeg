@@ -345,6 +345,8 @@ int write_macroblock(struct bits *bits, struct context *context, struct scan *sc
 					int_block->c[0] -= scan->last_block[Cs]->c[0];
 				}
 
+// 				assert(int_block->c[0] >= -2047 && int_block->c[0] <= +2047);
+
 				/* write block */
 				err = write_block(bits, context, Cs, int_block);
 				RETURN_IF(err);
@@ -375,6 +377,8 @@ int write_ecs(FILE *stream, struct context *context, struct scan *scan)
 		err = write_macroblock(&bits, context, scan);
 		RETURN_IF(err);
 	}
+
+	flush_bits(&bits);
 
 	printf("*** %zu macroblocks ***\n", context->mblocks);
 
