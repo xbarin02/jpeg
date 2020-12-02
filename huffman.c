@@ -32,10 +32,10 @@ int vlc_remove_bit(struct vlc *vlc, uint16_t *bit)
 {
 	assert(vlc != NULL);
 	assert(bit != NULL);
+	assert(vlc->size > 0);
 
 	*bit = (vlc->code >> (vlc->size - 1)) & 1;
 
-	vlc->code >>= 1;
 	vlc->size--;
 
 	return RET_SUCCESS;

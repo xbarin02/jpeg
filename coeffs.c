@@ -173,6 +173,7 @@ int write_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_a
 	uint8_t rs = cat_zrl_to_value(cat, coeff_ac->zrl);
 
 	if (coeff_ac->eob) {
+		cat = 0; // no extra bits
 		rs = 0;
 	}
 
@@ -240,5 +241,29 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct in
 
 int write_block(struct bits *bits, struct context *context, uint8_t Cs, struct int_block *int_block)
 {
+	int err;
+	uint8_t Td = context->component[Cs].Td;
+	uint8_t Ta = context->component[Cs].Ta;
+
+	struct hcode *hcode_dc = &context->hcode[0][Td];
+	struct hcode *hcode_ac = &context->hcode[1][Ta];
+
+	assert(int_block != NULL);
+
+	struct coeff_dc coeff_dc;
+
+	coeff_dc.c = int_block->c[zigzag[0]];
+
+	// write_dc()
+	err = write_dc(bits, hcode_dc, &coeff_dc);
+	RETURN_IF(err);
+
 	/* TODO */
+	struct coeff_ac coeff_ac;
+	coeff_ac.c = 0;
+	coeff_ac.eob = 1; /* HACK */
+	err = write_ac(bits, hcode_ac, &coeff_ac);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
 }
