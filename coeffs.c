@@ -22,6 +22,11 @@ uint8_t value_to_zerorun(uint8_t value)
 	return value >> 4;
 }
 
+uint8_t cat_zrl_to_value(uint8_t cat, uint8_t zrl)
+{
+	return ((zrl & 15) << 4) | (cat & 15);
+}
+
 /*
  * Figure F.12 – Extending the sign bit of a decoded value in V
  */
@@ -151,6 +156,33 @@ int read_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_ac
 	}
 
 	coeff_ac->c = decode_coeff(cat, extra);
+
+	return RET_SUCCESS;
+}
+
+// encode_cat, encode_extra, compose rs from zrl and cat, write_code(), write_extra_bits()
+int write_ac(struct bits *bits, struct hcode *hcode_ac, struct coeff_ac *coeff_ac)
+{
+	int err;
+
+	assert(coeff_ac != NULL);
+
+	uint8_t cat = encode_cat(coeff_ac->c);
+	uint16_t extra = encode_extra(coeff_ac->c, cat);
+
+	uint8_t rs = cat_zrl_to_value(cat, coeff_ac->zrl);
+
+	if (coeff_ac->eob) {
+		rs = 0;
+	}
+
+	// write Huff(rs), extra
+
+	err = write_code(bits, hcode_ac, rs);
+	RETURN_IF(err);
+
+	err = write_extra_bits(bits, cat, extra);
+	RETURN_IF(err);
 
 	return RET_SUCCESS;
 }
