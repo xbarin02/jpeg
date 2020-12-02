@@ -31,7 +31,12 @@ int read_image(struct context *context, FILE *stream)
 		case 1:
 			context->component[1].H = 1;
 			context->component[1].V = 1;
+
 			context->component[1].Tq = 0;
+
+			context->component[1].Td = 0;
+			context->component[1].Ta = 0;
+
 			context->max_H = 1;
 			context->max_V = 1;
 			break;
@@ -305,6 +310,77 @@ int produce_EOI(FILE *stream)
 	return RET_SUCCESS;
 }
 
+int write_macroblock(struct bits *bits, struct context *context, struct scan *scan)
+{
+	int err;
+
+	assert(scan != NULL);
+	assert(context != NULL);
+
+	size_t seq_no = context->mblocks;
+
+	size_t x = seq_no % context->m_x;
+	size_t y = seq_no / context->m_x;
+
+	/* for each component */
+	for (int j = 0; j < scan->Ns; ++j) {
+		uint8_t Cs = scan->Cs[j];
+		uint8_t H = context->component[Cs].H;
+		uint8_t V = context->component[Cs].V;
+
+		/* for each 8x8 block */
+		for (int v = 0; v < V; ++v) {
+			for (int h = 0; h < H; ++h) {
+				size_t block_x = x * H + h;
+				size_t block_y = y * V + v;
+
+				assert(block_x < context->component[Cs].b_x);
+
+				size_t block_seq = block_y * context->component[Cs].b_x + block_x;
+
+				struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
+
+				/* differential DC coding */
+				if (scan->last_block[Cs] != NULL) {
+					int_block->c[0] -= scan->last_block[Cs]->c[0];
+				}
+
+				/* write block */
+				err = write_block(bits, context, Cs, int_block);
+				RETURN_IF(err);
+
+				scan->last_block[Cs] = int_block;
+			}
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+int write_ecs(FILE *stream, struct context *context, struct scan *scan)
+{
+	int err;
+	struct bits bits;
+
+	init_bits(&bits, stream);
+
+	for (int i = 0; i < 256; ++i) {
+		scan->last_block[i] = NULL;
+	}
+
+	size_t mblocks_total = context->m_x * context->m_y;
+
+	/* loop over macroblocks */
+	for (; context->mblocks < mblocks_total; context->mblocks++) {
+		err = write_macroblock(&bits, context, scan);
+		RETURN_IF(err);
+	}
+
+	printf("*** %zu macroblocks ***\n", context->mblocks);
+
+	return RET_SUCCESS;
+}
+
 int produce_codestream(struct context *context, FILE *stream)
 {
 	int err;
@@ -340,6 +416,8 @@ int produce_codestream(struct context *context, FILE *stream)
 	RETURN_IF(err);
 
 	/* TODO loop over macroblocks */
+	err = write_ecs(stream, context, &scan);
+	RETURN_IF(err);
 
 	/* EOI */
 	err = produce_EOI(stream);
