@@ -324,6 +324,20 @@ struct scan {
 	struct int_block *last_block[256];
 };
 
+int produce_SOS_pre(struct context *context, struct scan *scan)
+{
+	assert(context != NULL);
+	assert(scan != NULL);
+	uint8_t Ns = context->Nf;
+	scan->Ns = Ns;
+	for (int j = 0, i = 0; i < 256; ++i) {
+		if (context->component[i].H != 0) {
+			scan->Cs[j++] = i;
+		}
+	}
+	return RET_SUCCESS;
+}
+
 int produce_SOS(struct context *context, FILE *stream, struct scan *scan)
 {
 	int err;
@@ -500,14 +514,15 @@ int write_macroblock_dry(struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
-int write_ecs(FILE *stream, struct context *context, struct scan *scan)
+// TODO
+int write_ecs_dry(struct context *context, struct scan *scan)
 {
 	int err;
-	struct bits bits;
-
-	init_bits(&bits, stream);
 
 	size_t mblocks_total = context->m_x * context->m_y;
+
+	/* reset the counter */
+	context->mblocks = 0;
 
 	for (int i = 0; i < 256; ++i) {
 		scan->last_block[i] = NULL;
@@ -527,6 +542,20 @@ int write_ecs(FILE *stream, struct context *context, struct scan *scan)
 			RETURN_IF(err);
 		}
 	}
+
+	printf("*** %zu macroblocks ***\n", context->mblocks);
+
+	return RET_SUCCESS;
+}
+
+int write_ecs(FILE *stream, struct context *context, struct scan *scan)
+{
+	int err;
+	struct bits bits;
+
+	init_bits(&bits, stream);
+
+	size_t mblocks_total = context->m_x * context->m_y;
 
 	/* reset the counter */
 	context->mblocks = 0;
@@ -568,6 +597,14 @@ int produce_codestream(struct context *context, FILE *stream)
 	err = produce_SOF0(context, stream);
 	RETURN_IF(err);
 
+	struct scan scan;
+
+	err = produce_SOS_pre(context, &scan);
+	RETURN_IF(err);
+
+	err = write_ecs_dry(context, &scan);
+	RETURN_IF(err);
+
 	/* DHT */
 	err = produce_DHT(context, 0, 0, stream); // DC Y
 	RETURN_IF(err);
@@ -579,8 +616,6 @@ int produce_codestream(struct context *context, FILE *stream)
 		err = produce_DHT(context, 1, 1, stream); // AC Cb/Cr
 		RETURN_IF(err);
 	}
-
-	struct scan scan;
 
 	/* SOS */
 	err = produce_SOS(context, stream, &scan);
