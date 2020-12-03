@@ -387,6 +387,22 @@ int parse_comment(FILE *stream, uint16_t len)
 	return RET_SUCCESS;
 }
 
+int epilogue(struct context *context, const char *path)
+{
+	int err;
+
+	err = dequantize(context);
+	RETURN_IF(err);
+	err = inverse_dct(context);
+	RETURN_IF(err);
+	err = conv_blocks_to_frame(context);
+	RETURN_IF(err);
+	err = write_image(context, path);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
 int parse_format(FILE *stream, struct context *context, const char *path)
 {
 	int err;
@@ -519,13 +535,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 				if (ftell(stream) - pos > 0) {
 					printf("*** %li bytes of garbage ***\n", ftell(stream) - pos);
 				}
-				err = dequantize(context);
-				RETURN_IF(err);
-				err = inverse_dct(context);
-				RETURN_IF(err);
-				err = conv_blocks_to_frame(context);
-				RETURN_IF(err);
-				err = write_image(context, path);
+				err = epilogue(context, path);
 				RETURN_IF(err);
 				return RET_SUCCESS;
 			/* DRI Define restart interval */
