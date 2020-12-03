@@ -43,5 +43,6 @@ int write_extra_bits(struct bits *bits, uint8_t count, uint16_t value);
 /* adaptive Huffman */
 void code_size(struct huffenc *huffenc);
 void count_bits(struct huffenc *huffenc);
+void sort_input(struct huffenc *huffenc);
 
 #endif

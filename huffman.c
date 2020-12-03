@@ -464,3 +464,25 @@ void count_bits(struct huffenc *huffenc)
 
 	adjust_bits(huffenc);
 }
+
+void sort_input(struct huffenc *huffenc)
+{
+	assert(huffenc != NULL);
+
+	int i = 1;
+	int k = 0;
+
+	do {
+		int j = 0;
+		do {
+			assert(j < 257);
+			if (huffenc->codesize[j] == (size_t)i) {
+				assert(k < 16 * 255);
+				huffenc->huff_val[k] = j;
+				k++;
+			}
+			j++;
+		} while (j <= 255);
+		i++;
+	} while (i <= 32);
+}

@@ -117,7 +117,8 @@ struct huffenc {
 	size_t freq[257];
 	size_t codesize[257];
 	int others[257];
-	size_t bits[33]; // 0..32
+	size_t bits[33]; // 0..32, corresponds to htable.L[]
+	uint8_t huff_val[16 * 255];
 };
 
 struct context {

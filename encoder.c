@@ -525,6 +525,7 @@ int write_ecs(FILE *stream, struct context *context, struct scan *scan)
 			printf("Adapting Huffman code [%i][%i]...\n", j, i);
 			code_size(&context->huffenc[j][i]);
 			count_bits(&context->huffenc[j][i]);
+			sort_input(&context->huffenc[j][i]);
 		}
 	}
 
