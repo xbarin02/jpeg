@@ -1,6 +1,7 @@
-Minimalist JPEG decoder
-=======================
+Minimalist JPEG decoder & encoder
+=================================
 
+Decoder
 - written in C99
 - can parse YCbCr, YCCK and grayscale images
 - can handle 8-bit or 12-bit samples
@@ -10,6 +11,15 @@ Minimalist JPEG decoder
 - supports Motion JPEG
 - does not support progressive JPEG files
 - does not support arithmetic coding
+
+Encoder
+- written in C99
+- supports subsampled components (4:4:4, 4:2:2, 4:2:0)
+- uses non-interleaved scan
+- supports quality setting (1..100)
+- support color and grayscale images
+- uses default Huffman table (no optimization)
+- can handle 8-bit and 12-bit input images
 
 Author
 ======
