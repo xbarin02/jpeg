@@ -325,3 +325,88 @@ int write_extra_bits(struct bits *bits, uint8_t count, uint16_t value)
 
 	return RET_SUCCESS;
 }
+
+/* The procedure “Find V1 for least value of FREQ(V1) > 0” always selects
+ * the value with the largest value of V1 when more than one V1 with the same
+ * frequency occurs. */
+int find_for_least_value_of_freq(struct huffenc *huffenc)
+{
+	assert(huffenc != NULL);
+
+	// find least value of freq[] > 0
+	size_t min_freq = (size_t)-1;
+	for (int i = 0; i < 257; ++i) {
+		if (huffenc->freq[i] > 0 && huffenc->freq[i] < min_freq) {
+			min_freq = huffenc->freq[i];
+		}
+	}
+
+	// selects the value with the largest value
+	for (int i = 256; i >= 0; --i) {
+		if (huffenc->freq[i] == min_freq) {
+			return i;
+		}
+	}
+
+	assert(0);
+}
+
+int find_for_next_least_value_of_freq(struct huffenc *huffenc, int V1)
+{
+	assert(huffenc != NULL);
+
+	// find least value of freq[] > 0
+	size_t min_freq = (size_t)-1;
+	for (int i = 0; i < 257; ++i) {
+		if (huffenc->freq[i] > 0 && huffenc->freq[i] < min_freq) {
+			min_freq = huffenc->freq[i];
+		}
+	}
+
+	// selects the value with the largest value
+	for (int i = V1 - 1; i >= 0; --i) {
+		if (huffenc->freq[i] == min_freq) {
+			return i;
+		}
+	}
+
+	// not found
+	return -1;
+}
+
+void code_size(struct huffenc *huffenc)
+{
+	do {
+		int V1 = find_for_least_value_of_freq(huffenc);
+		int V2 = find_for_next_least_value_of_freq(huffenc, V1);
+
+		if (V2 == -1) {
+			break;
+		}
+
+		huffenc->freq[V1] += huffenc->freq[V2];
+		huffenc->freq[V2] = 0;
+
+		while (1) {
+			huffenc->codesize[V1]++;
+
+			if (huffenc->others[V1] == -1) {
+				break;
+			} else {
+				V1 = huffenc->others[V1];
+			}
+		}
+
+		huffenc->others[V1] = V2;
+
+		while (1) {
+			huffenc->codesize[V2]++;
+
+			if (huffenc->others[V2] == -1) {
+				break;
+			} else {
+				V2 = huffenc->others[V2];
+			}
+		}
+	} while (1);
+}

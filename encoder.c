@@ -8,6 +8,7 @@
 #include "frame.h"
 #include "coeffs.h"
 #include "imgproc.h"
+#include "huffman.h"
 
 /* K.1 Quantization tables for luminance and chrominance components */
 static const unsigned int std_luminance_quant_tbl[64] = {
@@ -516,6 +517,14 @@ int write_ecs(FILE *stream, struct context *context, struct scan *scan)
 	for (; context->mblocks < mblocks_total; context->mblocks++) {
 		err = write_macroblock_dry(context, scan);
 		RETURN_IF(err);
+	}
+
+	/* adapt codes */
+	for (int j = 0; j < 2; ++j) {
+		for (int i = 0; i < 2; ++i) {
+			printf("Adapting Huffman code [%i][%i]...\n", j, i);
+			code_size(&context->huffenc[j][i]);
+		}
 	}
 
 	/* reset the counter */
