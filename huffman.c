@@ -413,6 +413,35 @@ void code_size(struct huffenc *huffenc)
 	} while (1);
 }
 
+void adjust_bits(struct huffenc *huffenc)
+{
+	assert(huffenc != NULL);
+
+	int i = 32;
+
+loop:
+	if (huffenc->bits[i] > 0) {
+		int j = i - 1;
+		do {
+			j--;
+		} while (huffenc->bits[j] <= 0);
+		huffenc->bits[i] -= 2;
+		huffenc->bits[i-1] += 1;
+		huffenc->bits[j+1] += 2;
+		huffenc->bits[j] -= 1;
+		goto loop;
+	} else {
+		i--;
+		if (i != 16) {
+			goto loop;
+		}
+		while (huffenc->bits[i] == 0) {
+			i--;
+		}
+		huffenc->bits[i] -= 1;
+	}
+}
+
 void count_bits(struct huffenc *huffenc)
 {
 	assert(huffenc != NULL);
@@ -425,6 +454,7 @@ void count_bits(struct huffenc *huffenc)
 	int i = 0;
 
 	do {
+		assert(huffenc->codesize[i] < 33);
 		if (huffenc->codesize[i] != 0) {
 			huffenc->bits[huffenc->codesize[i]]++;
 		}
