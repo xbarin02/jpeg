@@ -71,6 +71,8 @@ struct params {
 
 	/* quality 1..100 */
 	int q;
+
+	int optimize;
 };
 
 void init_params(struct params *params)
@@ -81,6 +83,8 @@ void init_params(struct params *params)
 	params->V = 1;
 
 	params->q = 50;
+
+	params->optimize = 1;
 }
 
 int read_image(struct context *context, FILE *stream, struct params *params)
@@ -577,7 +581,7 @@ int write_ecs(FILE *stream, struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
-int produce_codestream(struct context *context, FILE *stream)
+int produce_codestream(struct context *context, FILE *stream, struct params *params)
 {
 	int err;
 
@@ -602,9 +606,11 @@ int produce_codestream(struct context *context, FILE *stream)
 	err = fill_scan(context, &scan);
 	RETURN_IF(err);
 
-	// FIXME: enable this by command line option
-	err = write_ecs_dry(context, &scan);
-	RETURN_IF(err);
+	// enable this by command line option
+	if (params->optimize) {
+		err = write_ecs_dry(context, &scan);
+		RETURN_IF(err);
+	}
 
 	/* DHT */
 	err = produce_DHT(context, 0, 0, stream); // DC Y
@@ -645,7 +651,7 @@ int process_stream(FILE *i_stream, FILE *o_stream, struct params *params)
 	err = prologue(context, i_stream, params);
 	RETURN_IF(err);
 
-	err = produce_codestream(context, o_stream);
+	err = produce_codestream(context, o_stream, params);
 	RETURN_IF(err);
 
 	free_buffers(context);
@@ -663,7 +669,7 @@ int main(int argc, char *argv[])
 
 	int opt;
 
-	while ((opt = getopt(argc, argv, "h:v:q:")) != -1) {
+	while ((opt = getopt(argc, argv, "h:v:q:o:")) != -1) {
 		switch (opt) {
 			case 'h':
 				params.H = atoi(optarg);
@@ -674,8 +680,11 @@ int main(int argc, char *argv[])
 			case 'q':
 				params.q = atoi(optarg);
 				break;
+			case 'o':
+				params.optimize = atoi(optarg);
+				break;
 			default:
-				fprintf(stderr, "Usage: %s [-h factor] [-v factor] [-q quality] input.{ppm|pgm} output.jpg\n",
+				fprintf(stderr, "Usage: %s [-h factor] [-v factor] [-q quality] [-o value] input.{ppm|pgm} output.jpg\n",
 					argv[0]);
 				return 1;
 		}
