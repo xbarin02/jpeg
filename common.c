@@ -183,3 +183,16 @@ int compute_no_blocks_and_alloc_buffers(struct context *context)
 
 	return RET_SUCCESS;
 }
+
+int clamp(int min, int val, int max)
+{
+	if (val < min) {
+		return min;
+	}
+
+	if (val > max) {
+		return max;
+	}
+
+	return val;
+}

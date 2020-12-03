@@ -6,19 +6,7 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include "frame.h"
-
-int clamp(int min, int val, int max)
-{
-	if (val < min) {
-		return min;
-	}
-
-	if (val > max) {
-		return max;
-	}
-
-	return val;
-}
+#include "common.h"
 
 void frame_destroy(struct frame *frame)
 {
