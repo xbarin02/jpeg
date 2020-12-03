@@ -20,7 +20,7 @@ Encoder
 - uses interleaved scan
 - supports quality setting (1..100)
 - support color and grayscale images
-- uses default Huffman table (no optimization)
+- uses default Huffman table or optimized tables
 - can handle 8-bit and 12-bit input images
 
 Author
