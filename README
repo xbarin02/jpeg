@@ -17,7 +17,7 @@ Encoder
 
 - written in C99
 - supports subsampled components (4:4:4, 4:2:2, 4:2:0)
-- uses non-interleaved scan
+- uses interleaved scan
 - supports quality setting (1..100)
 - support color and grayscale images
 - uses default Huffman table (no optimization)
