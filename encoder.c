@@ -536,8 +536,7 @@ int write_ecs_dry(struct context *context, struct scan *scan)
 
 	/* adapt codes */
 	for (int j = 0; j < 2; ++j) {
-		// FIXME: too much tables for grayscale images
-		for (int i = 0; i < 2; ++i) {
+		for (int i = 0; i < (context->Nf > 1 ? 2 : 1); ++i) {
 			printf("Adapting Huffman code [%i][%i]...\n", j, i);
 			err = adapt_huffman_code(&context->htable[j][i], &context->hcode[j][i], &context->huffenc[j][i]);
 			RETURN_IF(err);
