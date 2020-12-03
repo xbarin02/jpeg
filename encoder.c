@@ -481,8 +481,10 @@ int produce_codestream(struct context *context, FILE *stream)
 	/* DQT */
 	err = produce_DQT(context, 0, stream); // Y
 	RETURN_IF(err);
-	err = produce_DQT(context, 1, stream); // Cb/Cr
-	RETURN_IF(err);
+	if (context->Nf > 1) {
+		err = produce_DQT(context, 1, stream); // Cb/Cr
+		RETURN_IF(err);
+	}
 
 	/* SOF0 */
 	err = produce_SOF0(context, stream);
@@ -493,10 +495,12 @@ int produce_codestream(struct context *context, FILE *stream)
 	RETURN_IF(err);
 	err = produce_DHT(context, 1, 0, stream); // AC Y
 	RETURN_IF(err);
-	err = produce_DHT(context, 0, 1, stream); // DC Cb/Cr
-	RETURN_IF(err);
-	err = produce_DHT(context, 1, 1, stream); // AC Cb/Cr
-	RETURN_IF(err);
+	if (context->Nf > 1) {
+		err = produce_DHT(context, 0, 1, stream); // DC Cb/Cr
+		RETURN_IF(err);
+		err = produce_DHT(context, 1, 1, stream); // AC Cb/Cr
+		RETURN_IF(err);
+	}
 
 	struct scan scan;
 
