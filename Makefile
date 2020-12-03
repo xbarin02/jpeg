@@ -1,5 +1,5 @@
-CFLAGS+=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_XOPEN_SOURCE -D_GNU_SOURCE
-LDFLAGS+=
+CFLAGS+=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_XOPEN_SOURCE -D_GNU_SOURCE -g
+LDFLAGS+=-rdynamic
 LDLIBS+=-lm
 BINS=parser encoder
 
