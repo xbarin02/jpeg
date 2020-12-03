@@ -258,12 +258,38 @@ int write_block(struct bits *bits, struct context *context, uint8_t Cs, struct i
 	err = write_dc(bits, hcode_dc, &coeff_dc);
 	RETURN_IF(err);
 
-	/* TODO */
-	struct coeff_ac coeff_ac;
-	coeff_ac.c = 0;
-	coeff_ac.eob = 1; /* HACK */
-	err = write_ac(bits, hcode_ac, &coeff_ac);
-	RETURN_IF(err);
+	int r = 0;
+	for (int i = 1; i < 64; ++i) {
+		struct coeff_ac coeff_ac;
+		coeff_ac.eob = 0;
+
+		if (int_block->c[zigzag[i]] == 0) {
+			/* zero coefficient */
+			if (i == 63) {
+				coeff_ac.eob = 1;
+				err = write_ac(bits, hcode_ac, &coeff_ac);
+				RETURN_IF(err);
+			} else {
+				r++;
+			}
+		} else {
+			/* non-zero coefficient */
+			while (r > 15) {
+				/* produce ZRL */
+				coeff_ac.c = 0;
+				coeff_ac.zrl = 15;
+				err = write_ac(bits, hcode_ac, &coeff_ac);
+				RETURN_IF(err);
+				r -= 16;
+			}
+			/* encode coefficient */
+			coeff_ac.c = int_block->c[zigzag[i]];
+			coeff_ac.zrl = r;
+			err = write_ac(bits, hcode_ac, &coeff_ac);
+			RETURN_IF(err);
+			r = 0;
+		}
+	}
 
 	return RET_SUCCESS;
 }
