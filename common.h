@@ -112,6 +112,13 @@ struct hcode {
 	size_t e_huf_si[256];
 };
 
+/* K.2 A procedure for generating the lists which specify a Huffman code table */
+struct huffenc {
+	size_t freq[257];
+	size_t codesize[257]; // TODO: initialize
+	int others[257];
+};
+
 struct context {
 	/* Specifies one of four possible destinations at the decoder into
 	 * which the quantization table shall be installed */
@@ -132,6 +139,7 @@ struct context {
 	/* indices: [0=DC/1=AC][identifier] */
 	struct htable htable[2][4];
 	struct hcode hcode[2][4];
+	struct huffenc huffenc[2][4];
 
 	/* Restart interval */
 	uint16_t Ri;
@@ -144,6 +152,8 @@ struct context {
 
 	uint8_t max_H, max_V;
 };
+
+void init_huffenc(struct huffenc *huffenc);
 
 int init_qtable(struct qtable *qtable);
 

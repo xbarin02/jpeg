@@ -81,6 +81,8 @@ int init_context(struct context *context)
 	for (int j = 0; j < 2; ++j) {
 		for (int i = 0; i < 4; ++i) {
 			init_htable(&context->htable[j][i]);
+
+			init_huffenc(&context->huffenc[j][i]);
 		}
 	}
 
@@ -195,4 +197,21 @@ int clamp(int min, int val, int max)
 	}
 
 	return val;
+}
+
+/* Before starting the procedure, the values of FREQ are collected for V = 0 to 255 and the FREQ value for V = 256 is set to 1 to reserve one code point.  */
+void init_huffenc(struct huffenc *huffenc)
+{
+	assert(huffenc != NULL);
+
+	for (int i = 0; i < 256; ++i) {
+		huffenc->freq[i] = 0;
+	}
+
+	huffenc->freq[256] = 1;
+
+	for (int i = 0; i < 257; ++i) {
+		huffenc->codesize[i] = 0;
+		huffenc->others[i] = -1;
+	}
 }

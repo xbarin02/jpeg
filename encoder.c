@@ -444,6 +444,61 @@ int write_macroblock(struct bits *bits, struct context *context, struct scan *sc
 	return RET_SUCCESS;
 }
 
+/* TODO */
+int write_macroblock_dry(struct context *context, struct scan *scan)
+{
+	int err;
+
+	assert(scan != NULL);
+	assert(context != NULL);
+
+	size_t seq_no = context->mblocks;
+
+	size_t x = seq_no % context->m_x;
+	size_t y = seq_no / context->m_x;
+
+	/* for each component */
+	for (int j = 0; j < scan->Ns; ++j) {
+		uint8_t Cs = scan->Cs[j];
+		uint8_t H = context->component[Cs].H;
+		uint8_t V = context->component[Cs].V;
+
+		/* for each 8x8 block */
+		for (int v = 0; v < V; ++v) {
+			for (int h = 0; h < H; ++h) {
+				size_t block_x = x * H + h;
+				size_t block_y = y * V + v;
+
+				assert(block_x < context->component[Cs].b_x);
+
+				size_t block_seq = block_y * context->component[Cs].b_x + block_x;
+
+				struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
+
+				/* differential DC coding */
+				if (scan->last_block[Cs] != NULL) {
+					int_block->c[0] -= scan->last_block[Cs]->c[0];
+				}
+
+				assert(int_block->c[0] >= -2047 && int_block->c[0] <= +2047);
+
+				/* write block */
+				err = write_block_dry(context, Cs, int_block);
+				RETURN_IF(err);
+
+				// revert back
+				if (scan->last_block[Cs] != NULL) {
+					int_block->c[0] += scan->last_block[Cs]->c[0];
+				}
+
+				scan->last_block[Cs] = int_block;
+			}
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
 int write_ecs(FILE *stream, struct context *context, struct scan *scan)
 {
 	int err;
@@ -451,11 +506,24 @@ int write_ecs(FILE *stream, struct context *context, struct scan *scan)
 
 	init_bits(&bits, stream);
 
+	size_t mblocks_total = context->m_x * context->m_y;
+
 	for (int i = 0; i < 256; ++i) {
 		scan->last_block[i] = NULL;
 	}
 
-	size_t mblocks_total = context->m_x * context->m_y;
+	/* loop over macroblocks (dry run) */
+	for (; context->mblocks < mblocks_total; context->mblocks++) {
+		err = write_macroblock_dry(context, scan);
+		RETURN_IF(err);
+	}
+
+	/* reset the counter */
+	context->mblocks = 0;
+
+	for (int i = 0; i < 256; ++i) {
+		scan->last_block[i] = NULL;
+	}
 
 	/* loop over macroblocks */
 	for (; context->mblocks < mblocks_total; context->mblocks++) {

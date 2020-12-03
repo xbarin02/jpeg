@@ -19,4 +19,6 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct in
 
 int write_block(struct bits *bits, struct context *context, uint8_t Cs, struct int_block *int_block);
 
+int write_block_dry(struct context *context, uint8_t Cs, struct int_block *int_block);
+
 #endif
