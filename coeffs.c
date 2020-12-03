@@ -258,8 +258,8 @@ int write_block(struct bits *bits, struct context *context, uint8_t Cs, struct i
 	err = write_dc(bits, hcode_dc, &coeff_dc);
 	RETURN_IF(err);
 
-	int r = 0;
-	for (int i = 1; i < 64; ++i) {
+	/* Figure F.2 – Procedure for sequential encoding of AC coefficients with Huffman coding */
+	for (int r = 0, i = 1; i < 64; ++i) {
 		struct coeff_ac coeff_ac;
 		coeff_ac.eob = 0;
 

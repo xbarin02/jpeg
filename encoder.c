@@ -424,7 +424,7 @@ int produce_codestream(struct context *context, FILE *stream)
 	err = produce_SOS(context, stream, &scan);
 	RETURN_IF(err);
 
-	/* TODO loop over macroblocks */
+	/* loop over macroblocks */
 	err = write_ecs(stream, context, &scan);
 	RETURN_IF(err);
 
@@ -449,18 +449,6 @@ int process_stream(FILE *i_stream, FILE *o_stream)
 
 	err = produce_codestream(context, o_stream);
 	RETURN_IF(err);
-
-	// TODO
-#if 0
-	err = dequantize(context);
-	RETURN_IF(err);
-	err = inverse_dct(context);
-	RETURN_IF(err);
-	err = conv_blocks_to_frame(context);
-	RETURN_IF(err);
-	err = write_image(context, NULL);
-	RETURN_IF(err);
-#endif
 
 	free_buffers(context);
 
