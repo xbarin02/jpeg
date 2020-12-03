@@ -33,6 +33,7 @@ static const unsigned int std_chrominance_quant_tbl[64] = {
 };
 
 /* 0..100 to scaling_factor */
+/* according to https://github.com/libjpeg-turbo/ijg/blob/master/jcparam.c */
 int quality_to_sf(int q)
 {
 	if (q < 1) {
@@ -556,7 +557,7 @@ int main(int argc, char *argv[])
 				params.q = atoi(optarg);
 				break;
 			default:
-				fprintf(stderr, "Usage: %s [-h num] [-v num] input.{ppm|pgm} output.jpg\n",
+				fprintf(stderr, "Usage: %s [-h factor] [-v factor] [-q quality] input.{ppm|pgm} output.jpg\n",
 					argv[0]);
 				return 1;
 		}
