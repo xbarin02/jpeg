@@ -2,6 +2,7 @@ Minimalist JPEG decoder & encoder
 =================================
 
 Decoder
+
 - written in C99
 - can parse YCbCr, YCCK and grayscale images
 - can handle 8-bit or 12-bit samples
@@ -13,6 +14,7 @@ Decoder
 - does not support arithmetic coding
 
 Encoder
+
 - written in C99
 - supports subsampled components (4:4:4, 4:2:2, 4:2:0)
 - uses non-interleaved scan
