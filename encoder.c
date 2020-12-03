@@ -3,12 +3,26 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <unistd.h>
 #include "common.h"
 #include "frame.h"
 #include "coeffs.h"
 #include "imgproc.h"
 
-int read_image(struct context *context, FILE *stream)
+struct params {
+	/* luma subsampling */
+	uint8_t H, V;
+};
+
+void init_params(struct params *params)
+{
+	assert(params != NULL);
+
+	params->H = 1;
+	params->V = 1;
+}
+
+int read_image(struct context *context, FILE *stream, struct params *params)
 {
 	int err;
 
@@ -41,8 +55,11 @@ int read_image(struct context *context, FILE *stream)
 			context->max_V = 1;
 			break;
 		case 3:
-			context->component[1].H = 2;
-			context->component[1].V = 2;
+			assert(params->H >= 1 && params->H <= 2);
+			assert(params->V >= 1 && params->V <= 2);
+
+			context->component[1].H = params->H;
+			context->component[1].V = params->V;
 			context->component[2].H = 1;
 			context->component[2].V = 1;
 			context->component[3].H = 1;
@@ -59,8 +76,8 @@ int read_image(struct context *context, FILE *stream)
 			context->component[3].Td = 1;
 			context->component[3].Ta = 1;
 
-			context->max_H = 2;
-			context->max_V = 2;
+			context->max_H = params->H;
+			context->max_V = params->V;
 			break;
 		default:
 			return RET_FAILURE_FILE_UNSUPPORTED;
@@ -90,11 +107,11 @@ int read_image(struct context *context, FILE *stream)
 }
 
 /* read_image(), conv_frame_to_blocks(), forward_dct(), quantize() */
-int prologue(struct context *context, FILE *i_stream)
+int prologue(struct context *context, FILE *i_stream, struct params *params)
 {
 	int err;
 
-	err = read_image(context, i_stream);
+	err = read_image(context, i_stream, params);
 	RETURN_IF(err);
 
 	err = conv_frame_to_blocks(context);
@@ -435,7 +452,7 @@ int produce_codestream(struct context *context, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int process_stream(FILE *i_stream, FILE *o_stream)
+int process_stream(FILE *i_stream, FILE *o_stream, struct params *params)
 {
 	int err;
 
@@ -444,7 +461,7 @@ int process_stream(FILE *i_stream, FILE *o_stream)
 	err = init_context(context);
 	RETURN_IF(err);
 
-	err = prologue(context, i_stream);
+	err = prologue(context, i_stream, params);
 	RETURN_IF(err);
 
 	err = produce_codestream(context, o_stream);
@@ -459,8 +476,29 @@ int process_stream(FILE *i_stream, FILE *o_stream)
 
 int main(int argc, char *argv[])
 {
-	const char *i_path = argc > 1 ? argv[1] : "Lenna.ppm";
-	const char *o_path = argc > 2 ? argv[2] : "output.jpg";
+	struct params params;
+
+	init_params(&params);
+
+	int opt;
+
+	while ((opt = getopt(argc, argv, "h:v:")) != -1) {
+		switch (opt) {
+			case 'h':
+				params.H = atoi(optarg);
+				break;
+			case 'v':
+				params.V = atoi(optarg);
+				break;
+			default:
+				fprintf(stderr, "Usage: %s [-h num] [-v num] input.{ppm|pgm} output.jpg\n",
+					argv[0]);
+				return 1;
+		}
+	}
+
+	const char *i_path = optind + 0 < argc ? argv[optind + 0] : "Lenna.ppm";
+	const char *o_path = optind + 1 < argc ? argv[optind + 1] : "output.jpg";
 
 	FILE *i_stream = fopen(i_path, "r");
 	FILE *o_stream = fopen(o_path, "w");
@@ -475,7 +513,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	int err = process_stream(i_stream, o_stream);
+	int err = process_stream(i_stream, o_stream, &params);
 
 	if (err) {
 		fprintf(stderr, "Failure.\n");
