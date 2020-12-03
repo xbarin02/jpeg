@@ -44,5 +44,6 @@ int write_extra_bits(struct bits *bits, uint8_t count, uint16_t value);
 void code_size(struct huffenc *huffenc);
 void count_bits(struct huffenc *huffenc);
 void sort_input(struct huffenc *huffenc);
+int adapt_huffman_code(struct htable *htable, struct hcode *hcode, struct huffenc *huffenc);
 
 #endif

@@ -486,3 +486,35 @@ void sort_input(struct huffenc *huffenc)
 		i++;
 	} while (i <= 32);
 }
+
+int adapt_huffman_code(struct htable *htable, struct hcode *hcode, struct huffenc *huffenc)
+{
+	assert(htable != NULL);
+	assert(huffenc != NULL);
+
+	code_size(huffenc);
+	count_bits(huffenc);
+	sort_input(huffenc);
+
+	// fill htable.L[]
+	for (int i = 0; i < 16; ++i) {
+		htable->L[i] = huffenc->bits[i];
+	}
+
+	// fill htable.V[]
+	uint8_t *v = huffenc->huff_val;
+
+	for (int i = 0; i < 16; ++i) {
+		uint8_t L = htable->L[i];
+
+		for (int l = 0; l < L; ++l) {
+			htable->V[i][l] = *v;
+			v++;
+		}
+	}
+
+// 	int err = conv_htable_to_hcode(htable, hcode);
+// 	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
