@@ -1,6 +1,7 @@
 #ifndef JPEG_MJPEG_H
 #define JPEG_MJPEG_H
 
+// DC Y
 static const struct htable mjpg_htable_0_0 = {
 	{0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, },
 	{
@@ -16,6 +17,7 @@ static const struct htable mjpg_htable_0_0 = {
 	},
 };
 
+// DC CbCr
 static const struct htable mjpg_htable_0_1 = {
 	{0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, },
 	{
@@ -33,6 +35,7 @@ static const struct htable mjpg_htable_0_1 = {
 	},
 };
 
+// AC Y
 static const struct htable mjpg_htable_1_0 = {
 	{0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125, },
 	{
@@ -55,6 +58,7 @@ static const struct htable mjpg_htable_1_0 = {
 	},
 };
 
+// AC CbCr
 static const struct htable mjpg_htable_1_1 = {
 	{0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119, },
 	{

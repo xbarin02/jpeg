@@ -19,3 +19,5 @@ distclean: clean
 	$(RM) -- *.gcda
 
 parser: parser.o common.o io.o huffman.o coeffs.o imgproc.o frame.o
+
+encoder: encoder.o common.o io.o huffman.o coeffs.o imgproc.o frame.o

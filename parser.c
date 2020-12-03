@@ -62,34 +62,6 @@ int parse_qtable(FILE *stream, struct context *context)
 	return RET_SUCCESS;
 }
 
-int alloc_buffers(struct component *component, size_t size)
-{
-	component->int_buffer = malloc(sizeof(struct int_block) * size);
-
-	if (component->int_buffer == NULL) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	component->flt_buffer = malloc(sizeof(struct flt_block) * size);
-
-	if (component->flt_buffer == NULL) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	component->frame_buffer = malloc(sizeof(float) * 64 * size);
-
-	if (component->frame_buffer == NULL) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	return RET_SUCCESS;
-}
-
-static size_t ceil_div(size_t n, size_t d)
-{
-	return (n + (d - 1)) / d;
-}
-
 int parse_frame_header(FILE *stream, struct context *context)
 {
 	int err;
@@ -152,28 +124,8 @@ int parse_frame_header(FILE *stream, struct context *context)
 	context->max_H = max_H;
 	context->max_V = max_V;
 
-	context->m_x = ceil_div(X, 8 * max_H);
-	context->m_y = ceil_div(Y, 8 * max_V);
-
-	printf("[DEBUG] expecting %zu macroblocks\n", context->m_x * context->m_y);
-
-	for (int i = 0; i < 256; ++i) {
-		uint8_t H, V;
-		H = context->component[i].H;
-		V = context->component[i].V;
-		if (H != 0) {
-			size_t b_x = ceil_div(X, 8 * max_H) * H;
-			size_t b_y = ceil_div(Y, 8 * max_V) * V;
-
-			context->component[i].b_x = b_x;
-			context->component[i].b_y = b_y;
-
-			printf("[DEBUG] C = %i: %zu blocks (x=%zu y=%zu)\n", i, b_x * b_y, b_x, b_y);
-
-			err = alloc_buffers(&context->component[i], b_x * b_y);
-			RETURN_IF(err);
-		}
-	}
+	err = compute_no_blocks_and_alloc_buffers(context);
+	RETURN_IF(err);
 
 	return RET_SUCCESS;
 }
@@ -439,6 +391,8 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 {
 	int err;
 
+	struct scan scan;
+
 	while (1) {
 		uint16_t marker;
 
@@ -450,7 +404,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 		switch (marker) {
 			uint16_t len;
 			long pos;
-			struct scan scan;
+
 			/* SOI* Start of image */
 			case 0xffd8:
 				printf("SOI\n");
@@ -463,6 +417,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 			case 0xffe6:
 			case 0xffe7:
 			case 0xffe8:
+			case 0xffec:
 			case 0xffed:
 			case 0xffee:
 				printf("APP%i\n", marker & 0xf);
@@ -566,7 +521,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 				}
 				err = dequantize(context);
 				RETURN_IF(err);
-				err = invert_dct(context);
+				err = inverse_dct(context);
 				RETURN_IF(err);
 				err = conv_blocks_to_frame(context);
 				RETURN_IF(err);
@@ -605,16 +560,6 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 				fprintf(stderr, "unhandled marker 0x%" PRIx16 "\n", marker);
 				return RET_FAILURE_FILE_UNSUPPORTED;
 		}
-	}
-}
-
-void free_buffers(struct context *context)
-{
-	for (int i = 0; i < 256; ++i) {
-		free(context->component[i].int_buffer);
-		free(context->component[i].flt_buffer);
-
-		free(context->component[i].frame_buffer);
 	}
 }
 

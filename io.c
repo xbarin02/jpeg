@@ -40,9 +40,64 @@ int next_bit(struct bits *bits, uint8_t *bit)
 	return RET_SUCCESS;
 }
 
+int put_bit(struct bits *bits, uint8_t bit)
+{
+	assert(bits != NULL);
+	assert(bits->count < 8);
+
+	bits->byte <<= 1;
+	bits->byte |= bit & 1;
+
+	bits->count++;
+
+	if (bits->count == 8) {
+		int err;
+
+		err = write_ecs_byte(bits->stream, bits->byte);
+		RETURN_IF(err);
+
+		bits->count = 0;
+	}
+
+	return RET_SUCCESS;
+}
+
+int flush_bits(struct bits *bits)
+{
+	int err;
+
+	assert(bits != NULL);
+
+	if (bits->count == 0) {
+		return RET_SUCCESS;
+	}
+
+	while (bits->count < 8) {
+		bits->byte <<= 1;
+		bits->byte |= 1;
+		bits->count++;
+	}
+
+	err = write_ecs_byte(bits->stream, bits->byte);
+	RETURN_IF(err);
+
+	bits->count = 0;
+
+	return RET_SUCCESS;
+}
+
 int read_byte(FILE *stream, uint8_t *byte)
 {
 	if (fread(byte, sizeof(uint8_t), 1, stream) != 1) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	return RET_SUCCESS;
+}
+
+int write_byte(FILE *stream, uint8_t byte)
+{
+	if (fwrite(&byte, sizeof(uint8_t), 1, stream) != 1) {
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -66,11 +121,32 @@ int read_word(FILE *stream, uint16_t *word)
 	return RET_SUCCESS;
 }
 
+int write_word(FILE *stream, uint16_t word)
+{
+	word = htons(word);
+
+	if (fwrite(&word, sizeof(uint16_t), 1, stream) != 1) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	return RET_SUCCESS;
+}
+
 int read_length(FILE *stream, uint16_t *len)
 {
 	int err;
 
 	err = read_word(stream, len);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
+int write_length(FILE *stream, uint16_t len)
+{
+	int err;
+
+	err = write_word(stream, len);
 	RETURN_IF(err);
 
 	return RET_SUCCESS;
@@ -90,6 +166,17 @@ int read_nibbles(FILE *stream, uint8_t *first, uint8_t *second)
 	/* The first 4-bit parameter of the pair shall occupy the most significant 4 bits of the byte.  */
 	*first = (byte >> 4) & 15;
 	*second = (byte >> 0) & 15;
+
+	return RET_SUCCESS;
+}
+
+int write_nibbles(FILE *stream, uint8_t first, uint8_t second)
+{
+	int err;
+	uint8_t byte = (first << 4) | (second & 15);
+
+	err = write_byte(stream, byte);
+	RETURN_IF(err);
 
 	return RET_SUCCESS;
 }
@@ -132,6 +219,21 @@ int read_marker(FILE *stream, uint16_t *marker)
 	} while (1);
 }
 
+int write_marker(FILE *stream, uint16_t marker)
+{
+	int err;
+
+	assert((marker >> 8) == 0xff);
+
+	err = write_byte(stream, 0xff);
+	RETURN_IF(err);
+
+	err = write_byte(stream, (uint8_t)marker);
+	RETURN_IF(err);
+
+	return RET_SUCCESS;
+}
+
 int skip_segment(FILE *stream, uint16_t len)
 {
 	if (fseek(stream, (long)len - 2, SEEK_CUR) != 0) {
@@ -169,4 +271,20 @@ int read_ecs_byte(FILE *stream, uint8_t *byte)
 		*byte = b;
 		return RET_SUCCESS;
 	}
+}
+
+/* B.1.1.5 Entropy-coded data segments */
+int write_ecs_byte(FILE *stream, uint8_t byte)
+{
+	int err;
+
+	err = write_byte(stream, byte);
+	RETURN_IF(err);
+
+	if (byte == 0xff) {
+		err = write_byte(stream, 0x00);
+		RETURN_IF(err);
+	}
+
+	return RET_SUCCESS;
 }
