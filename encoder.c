@@ -66,6 +66,9 @@ void set_qtable(struct qtable *qtable, const unsigned int Q_ref[64], int q)
 struct params {
 	/* luma subsampling */
 	uint8_t H, V;
+
+	/* quality 1..100 */
+	int q;
 };
 
 void init_params(struct params *params)
@@ -74,6 +77,8 @@ void init_params(struct params *params)
 
 	params->H = 1;
 	params->V = 1;
+
+	params->q = 50;
 }
 
 int read_image(struct context *context, FILE *stream, struct params *params)
@@ -137,8 +142,8 @@ int read_image(struct context *context, FILE *stream, struct params *params)
 			return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
-	set_qtable(&context->qtable[0], std_luminance_quant_tbl, 50);
-	set_qtable(&context->qtable[1], std_chrominance_quant_tbl, 50);
+	set_qtable(&context->qtable[0], std_luminance_quant_tbl, params->q);
+	set_qtable(&context->qtable[1], std_chrominance_quant_tbl, params->q);
 
 	err = frame_create_empty(context, &frame);
 	RETURN_IF(err);
@@ -539,13 +544,16 @@ int main(int argc, char *argv[])
 
 	int opt;
 
-	while ((opt = getopt(argc, argv, "h:v:")) != -1) {
+	while ((opt = getopt(argc, argv, "h:v:q:")) != -1) {
 		switch (opt) {
 			case 'h':
 				params.H = atoi(optarg);
 				break;
 			case 'v':
 				params.V = atoi(optarg);
+				break;
+			case 'q':
+				params.q = atoi(optarg);
 				break;
 			default:
 				fprintf(stderr, "Usage: %s [-h num] [-v num] input.{ppm|pgm} output.jpg\n",
