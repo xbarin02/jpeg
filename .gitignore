@@ -1,6 +1,8 @@
 parser
 encoder
 *.jpg
+*.jpeg
+*.JPG
 *.o
 *.ppm
 *.pgm
