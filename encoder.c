@@ -324,17 +324,19 @@ struct scan {
 	struct int_block *last_block[256];
 };
 
-int produce_SOS_pre(struct context *context, struct scan *scan)
+int fill_scan(struct context *context, struct scan *scan)
 {
 	assert(context != NULL);
 	assert(scan != NULL);
-	uint8_t Ns = context->Nf;
-	scan->Ns = Ns;
+
+	scan->Ns = context->Nf;
+
 	for (int j = 0, i = 0; i < 256; ++i) {
 		if (context->component[i].H != 0) {
 			scan->Cs[j++] = i;
 		}
 	}
+
 	return RET_SUCCESS;
 }
 
@@ -459,7 +461,6 @@ int write_macroblock(struct bits *bits, struct context *context, struct scan *sc
 	return RET_SUCCESS;
 }
 
-/* TODO */
 int write_macroblock_dry(struct context *context, struct scan *scan)
 {
 	int err;
@@ -514,7 +515,6 @@ int write_macroblock_dry(struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
-// TODO
 int write_ecs_dry(struct context *context, struct scan *scan)
 {
 	int err;
@@ -536,6 +536,7 @@ int write_ecs_dry(struct context *context, struct scan *scan)
 
 	/* adapt codes */
 	for (int j = 0; j < 2; ++j) {
+		// FIXME: too much tables for grayscale images
 		for (int i = 0; i < 2; ++i) {
 			printf("Adapting Huffman code [%i][%i]...\n", j, i);
 			err = adapt_huffman_code(&context->htable[j][i], &context->hcode[j][i], &context->huffenc[j][i]);
@@ -599,9 +600,10 @@ int produce_codestream(struct context *context, FILE *stream)
 
 	struct scan scan;
 
-	err = produce_SOS_pre(context, &scan);
+	err = fill_scan(context, &scan);
 	RETURN_IF(err);
 
+	// FIXME: enable this by command line option
 	err = write_ecs_dry(context, &scan);
 	RETURN_IF(err);
 

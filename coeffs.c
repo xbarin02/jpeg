@@ -299,7 +299,6 @@ int write_block(struct bits *bits, struct context *context, uint8_t Cs, struct i
 	return RET_SUCCESS;
 }
 
-/* TODO dry run */
 int write_block_dry(struct context *context, uint8_t Cs, struct int_block *int_block)
 {
 	uint8_t Td = context->component[Cs].Td;

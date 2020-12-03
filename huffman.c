@@ -329,8 +329,6 @@ int write_extra_bits(struct bits *bits, uint8_t count, uint16_t value)
 /* The procedure “Find V1 for least value of FREQ(V1) > 0” always selects
  * the value with the largest value of V1 when more than one V1 with the same
  * frequency occurs. */
-// https://github.com/bruceg/dngutils/blob/master/jpeg-huffman.c
-// https://git.supremind.info/linyining/MediaSDK/blob/78d5c47fecbdb11e2ba00e13658b74d540c55cd6/contrib/ipp/src/pjenchuff.c
 int find_for_least_value_of_freq(struct huffenc *huffenc)
 {
 	assert(huffenc != NULL);
@@ -491,7 +489,7 @@ int adapt_huffman_code(struct htable *htable, struct hcode *hcode, struct huffen
 
 	// fill htable.L[]
 	for (int i = 0; i < 16; ++i) {
-		htable->L[i] = huffenc->bits[i+1]; // HACK +1
+		htable->L[i] = huffenc->bits[i + 1]; // FIXME is the +1 correct?
 	}
 
 	// fill htable.V[]
