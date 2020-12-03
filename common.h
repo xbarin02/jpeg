@@ -115,8 +115,9 @@ struct hcode {
 /* K.2 A procedure for generating the lists which specify a Huffman code table */
 struct huffenc {
 	size_t freq[257];
-	size_t codesize[257]; // TODO: initialize
+	size_t codesize[257];
 	int others[257];
+	size_t bits[33]; // 0..32
 };
 
 struct context {

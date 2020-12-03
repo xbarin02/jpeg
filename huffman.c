@@ -376,6 +376,8 @@ int find_for_next_least_value_of_freq(struct huffenc *huffenc, int V1)
 
 void code_size(struct huffenc *huffenc)
 {
+	assert(huffenc != NULL);
+
 	do {
 		int V1 = find_for_least_value_of_freq(huffenc);
 		int V2 = find_for_next_least_value_of_freq(huffenc, V1);
@@ -409,4 +411,26 @@ void code_size(struct huffenc *huffenc)
 			}
 		}
 	} while (1);
+}
+
+void count_bits(struct huffenc *huffenc)
+{
+	assert(huffenc != NULL);
+
+	/* The counts in BITS are zero at the start of the procedure */
+	for (int k = 0; k < 33; ++k) {
+		huffenc->bits[k] = 0;
+	}
+
+	int i = 0;
+
+	do {
+		if (huffenc->codesize[i] != 0) {
+			huffenc->bits[huffenc->codesize[i]]++;
+		}
+
+		i++;
+	} while (i != 257);
+
+	adjust_bits(huffenc);
 }
