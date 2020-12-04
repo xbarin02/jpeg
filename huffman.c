@@ -489,7 +489,7 @@ int adapt_huffman_code(struct htable *htable, struct hcode *hcode, struct huffen
 
 	// fill htable.L[]
 	for (int i = 0; i < 16; ++i) {
-		htable->L[i] = huffenc->bits[i + 1]; // FIXME is the +1 correct?
+		htable->L[i] = huffenc->bits[i + 1];
 	}
 
 	// fill htable.V[]

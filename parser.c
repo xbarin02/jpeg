@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <assert.h>
-
 #include "common.h"
 #include "io.h"
 #include "huffman.h"
 #include "coeffs.h"
 #include "imgproc.h"
+#include "frame.h"
 
 const char *Pq_to_str[] = {
 	[0] = "8-bit",
@@ -383,6 +383,23 @@ int parse_comment(FILE *stream, uint16_t len)
 	printf("%s\n", buf);
 
 	free(buf);
+
+	return RET_SUCCESS;
+}
+
+int write_image(struct context *context, const char *path)
+{
+	int err;
+
+	struct frame frame;
+
+	err = frame_create(context, &frame);
+	RETURN_IF(err);
+	err = frame_to_rgb(&frame);
+	RETURN_IF(err);
+	err = write_frame(&frame, path);
+	RETURN_IF(err);
+	frame_destroy(&frame);
 
 	return RET_SUCCESS;
 }

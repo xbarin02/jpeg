@@ -60,11 +60,11 @@ void set_qtable(struct qtable *qtable, const unsigned int Q_ref[64], int q)
 	int sf = quality_to_sf(q);
 
 	for (int i = 0; i < 64; ++i) {
-		// int clamp(int min, int val, int max);
 		qtable->Q[i] = clamp(1, (Q_ref[i] * sf + 50) / 100, 255);
 	}
 }
 
+/* command line parameters */
 struct params {
 	/* luma subsampling */
 	uint8_t H, V;
@@ -546,8 +546,6 @@ int write_ecs_dry(struct context *context, struct scan *scan)
 			RETURN_IF(err);
 		}
 	}
-
-	printf("*** %zu macroblocks ***\n", context->mblocks);
 
 	return RET_SUCCESS;
 }

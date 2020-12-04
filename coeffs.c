@@ -299,6 +299,7 @@ int write_block(struct bits *bits, struct context *context, uint8_t Cs, struct i
 	return RET_SUCCESS;
 }
 
+/* don't actually compress the block, just collect the coded values to later optimize Huffman table */
 int write_block_dry(struct context *context, uint8_t Cs, struct int_block *int_block)
 {
 	uint8_t Td = context->component[Cs].Td;

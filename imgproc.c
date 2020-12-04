@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "imgproc.h"
 #include "coeffs.h"
-#include "frame.h"
 
 void dequantize_block(struct int_block *int_block, struct flt_block *flt_block, struct qtable *qtable)
 {
@@ -289,23 +288,6 @@ int conv_frame_to_blocks(struct context *context)
 			}
 		}
 	}
-
-	return RET_SUCCESS;
-}
-
-int write_image(struct context *context, const char *path)
-{
-	int err;
-
-	struct frame frame;
-
-	err = frame_create(context, &frame);
-	RETURN_IF(err);
-	err = frame_to_rgb(&frame);
-	RETURN_IF(err);
-	err = write_frame(&frame, path);
-	RETURN_IF(err);
-	frame_destroy(&frame);
 
 	return RET_SUCCESS;
 }
