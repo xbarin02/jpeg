@@ -2,6 +2,7 @@ CFLAGS+=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_XOPEN_SOURCE -D_GN
 LDFLAGS+=-rdynamic
 LDLIBS+=-lm
 BINS=decoder encoder
+BINDIR?=$(DESTDIR)$(PREFIX)/usr/bin
 
 CFLAGS+=$(EXTRA_CFLAGS)
 LDFLAGS+=$(EXTRA_LDFLAGS)
@@ -21,3 +22,8 @@ distclean: clean
 decoder: decoder.o common.o io.o huffman.o coeffs.o imgproc.o frame.o
 
 encoder: encoder.o common.o io.o huffman.o coeffs.o imgproc.o frame.o
+
+.PHONY: install
+install: all
+	install -d $(BINDIR)
+	install -m 755 $(BINS) $(BINDIR)
