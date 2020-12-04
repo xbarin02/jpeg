@@ -1,7 +1,7 @@
 CFLAGS+=-std=c99 -pedantic -Wall -Wextra -march=native -O3 -D_XOPEN_SOURCE -D_GNU_SOURCE -g
 LDFLAGS+=-rdynamic
 LDLIBS+=-lm
-BINS=parser encoder
+BINS=decoder encoder
 
 CFLAGS+=$(EXTRA_CFLAGS)
 LDFLAGS+=$(EXTRA_LDFLAGS)
@@ -18,6 +18,6 @@ clean:
 distclean: clean
 	$(RM) -- *.gcda
 
-parser: parser.o common.o io.o huffman.o coeffs.o imgproc.o frame.o
+decoder: decoder.o common.o io.o huffman.o coeffs.o imgproc.o frame.o
 
 encoder: encoder.o common.o io.o huffman.o coeffs.o imgproc.o frame.o
