@@ -369,6 +369,10 @@ void code_size(struct huffenc *huffenc)
 {
 	assert(huffenc != NULL);
 
+#define FREQ(V)     (huffenc->freq[(V)])
+#define CODESIZE(V) (huffenc->codesize[(V)])
+#define OTHERS(V)   (huffenc->others[(V)])
+
 	do {
 		int V1 = find_for_least_value_of_freq(huffenc);
 		int V2 = find_for_next_least_value_of_freq(huffenc, V1);
@@ -377,31 +381,35 @@ void code_size(struct huffenc *huffenc)
 			break;
 		}
 
-		huffenc->freq[V1] += huffenc->freq[V2];
-		huffenc->freq[V2] = 0;
+		FREQ(V1) += FREQ(V2);
+		FREQ(V2) = 0;
 
 		while (1) {
-			huffenc->codesize[V1]++;
+			CODESIZE(V1)++;
 
-			if (huffenc->others[V1] == -1) {
+			if (OTHERS(V1) == -1) {
 				break;
 			} else {
-				V1 = huffenc->others[V1];
+				V1 = OTHERS(V1);
 			}
 		}
 
-		huffenc->others[V1] = V2;
+		OTHERS(V1) = V2;
 
 		while (1) {
-			huffenc->codesize[V2]++;
+			CODESIZE(V2)++;
 
-			if (huffenc->others[V2] == -1) {
+			if (OTHERS(V2) == -1) {
 				break;
 			} else {
-				V2 = huffenc->others[V2];
+				V2 = OTHERS(V2);
 			}
 		}
 	} while (1);
+
+#undef FREQ
+#undef CODESIZE
+#undef OTHERS
 }
 
 void adjust_bits(struct huffenc *huffenc)
