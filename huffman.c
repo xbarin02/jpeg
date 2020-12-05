@@ -479,22 +479,32 @@ void sort_input(struct huffenc *huffenc)
 {
 	assert(huffenc != NULL);
 
+#define CODESIZE(V) (huffenc->codesize[(V)])
+#define HUFFVAL(K)  (huffenc->huff_val[(K)])
+
 	int i = 1;
 	int k = 0;
 
 	do {
 		int j = 0;
+
 		do {
 			assert(j < 257);
-			if (huffenc->codesize[j] == (size_t)i) {
+
+			if (CODESIZE(j) == (size_t)i) {
 				assert(k < 16 * 255);
-				huffenc->huff_val[k] = j;
+
+				HUFFVAL(k) = j;
 				k++;
 			}
 			j++;
 		} while (j <= 255);
+
 		i++;
 	} while (i <= 32);
+
+#undef CODESIZE
+#undef HUFFVAL
 }
 
 int adapt_huffman_code(struct htable *htable, struct hcode *hcode, struct huffenc *huffenc)
