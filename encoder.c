@@ -519,6 +519,11 @@ int write_macroblock_dry(struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
+const char *Tc_to_str[] = {
+	[0] = "DC",
+	[1] = "AC"
+};
+
 int write_ecs_dry(struct context *context, struct scan *scan)
 {
 	int err;
@@ -541,7 +546,7 @@ int write_ecs_dry(struct context *context, struct scan *scan)
 	/* adapt codes */
 	for (int j = 0; j < 2; ++j) {
 		for (int i = 0; i < (context->Nf > 1 ? 2 : 1); ++i) {
-			printf("Adapting Huffman code [%i][%i]...\n", j, i);
+			printf("Adapting Huffman code [%s][%i]...\n", Tc_to_str[j], i);
 			err = adapt_huffman_code(&context->htable[j][i], &context->hcode[j][i], &context->huffenc[j][i]);
 			RETURN_IF(err);
 		}
