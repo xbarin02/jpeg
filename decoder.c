@@ -277,6 +277,11 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 
 					struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
 
+					/* past the end of data? */
+					if (block_seq >= context->component[Cs].b_x * context->component[Cs].b_y) {
+						int_block = NULL;
+					}
+
 					/* read block */
 					err = read_block(bits, context, Cs, int_block);
 					RETURN_IF(err);
