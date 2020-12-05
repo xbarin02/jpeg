@@ -507,13 +507,15 @@ void sort_input(struct huffenc *huffenc)
 #undef HUFFVAL
 }
 
-int adapt_huffman_code(struct htable *htable, struct hcode *hcode, struct huffenc *huffenc)
+int adapt_huffman_table(struct htable *htable, struct huffenc *huffenc)
 {
 	assert(htable != NULL);
 	assert(huffenc != NULL);
 
 	code_size(huffenc);
+
 	count_bits(huffenc);
+
 	sort_input(huffenc);
 
 	// fill htable.L[]
@@ -532,9 +534,6 @@ int adapt_huffman_code(struct htable *htable, struct hcode *hcode, struct huffen
 			v++;
 		}
 	}
-
-	int err = conv_htable_to_hcode(htable, hcode);
-	RETURN_IF(err);
 
 	return RET_SUCCESS;
 }

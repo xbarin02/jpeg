@@ -43,6 +43,6 @@ int write_extra_bits(struct bits *bits, uint8_t count, uint16_t value);
 /*
  * adaptive Huffman
  */
-int adapt_huffman_code(struct htable *htable, struct hcode *hcode, struct huffenc *huffenc);
+int adapt_huffman_table(struct htable *htable, struct huffenc *huffenc);
 
 #endif
