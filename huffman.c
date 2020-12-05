@@ -449,23 +449,30 @@ void count_bits(struct huffenc *huffenc)
 {
 	assert(huffenc != NULL);
 
+#define BITS(I)     (huffenc->bits[(I)])
+#define CODESIZE(V) (huffenc->codesize[(V)])
+
 	/* The counts in BITS are zero at the start of the procedure */
 	for (int k = 0; k < 33; ++k) {
-		huffenc->bits[k] = 0;
+		BITS(k) = 0;
 	}
 
 	int i = 0;
 
 	do {
-		assert(huffenc->codesize[i] < 33);
-		if (huffenc->codesize[i] != 0) {
-			huffenc->bits[huffenc->codesize[i]]++;
+		assert(CODESIZE(i) < 33);
+
+		if (CODESIZE(i) != 0) {
+			BITS(CODESIZE(i))++;
 		}
 
 		i++;
 	} while (i != 257);
 
 	adjust_bits(huffenc);
+
+#undef BITS
+#undef CODESIZE
 }
 
 void sort_input(struct huffenc *huffenc)
