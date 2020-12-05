@@ -28,10 +28,10 @@ int parse_qtable(FILE *stream, struct context *context)
 	err = read_nibbles(stream, &Pq, &Tq);
 	RETURN_IF(err);
 
-	printf("Pq = %" PRIu8 " (%s), Tq = %" PRIu8 " (QT identifier)\n", Pq, Pq_to_str[Pq], Tq);
-
 	assert(Tq < 4);
 	assert(Pq < 2);
+
+	printf("Pq = %" PRIu8 " (%s), Tq = %" PRIu8 " (QT identifier)\n", Pq, Pq_to_str[Pq], Tq);
 
 	qtable = &context->qtable[Tq];
 
