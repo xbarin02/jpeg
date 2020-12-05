@@ -416,29 +416,33 @@ void adjust_bits(struct huffenc *huffenc)
 {
 	assert(huffenc != NULL);
 
+#define BITS(I) (huffenc->bits[(I)])
+
 	int i = 32;
 
 loop:
-	if (huffenc->bits[i] > 0) {
+	if (BITS(i) > 0) {
 		int j = i - 1;
 		do {
 			j--;
-		} while (huffenc->bits[j] <= 0);
-		huffenc->bits[i] -= 2;
-		huffenc->bits[i-1] += 1;
-		huffenc->bits[j+1] += 2;
-		huffenc->bits[j] -= 1;
+		} while (BITS(j) <= 0);
+		BITS(i) -= 2;
+		BITS(i - 1) += 1;
+		BITS(j + 1) += 2;
+		BITS(j) -= 1;
 		goto loop;
 	} else {
 		i--;
 		if (i != 16) {
 			goto loop;
 		}
-		while (huffenc->bits[i] == 0) {
+		while (BITS(i) == 0) {
 			i--;
 		}
-		huffenc->bits[i] -= 1;
+		BITS(i) -= 1;
 	}
+
+#undef BITS
 }
 
 void count_bits(struct huffenc *huffenc)
