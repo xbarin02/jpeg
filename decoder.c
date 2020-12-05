@@ -145,6 +145,8 @@ int parse_huffman_tables(FILE *stream, struct context *context)
 	err = read_nibbles(stream, &Tc, &Th);
 	RETURN_IF(err);
 
+	assert(Tc < 2);
+
 	printf("Tc = %" PRIu8 " (%s table) Th = %" PRIu8 " (HT identifier)\n", Tc, Tc_to_str[Tc], Th);
 
 	struct htable *htable = &context->htable[Tc][Th];
