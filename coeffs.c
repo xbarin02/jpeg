@@ -208,6 +208,14 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct in
 	err = read_dc(bits, hcode_dc, &coeff_dc);
 	RETURN_IF(err);
 
+	/*
+	 * special case: when reading past the end of data, the caller set
+	 * the int_block to NULL... treat this as if there was no more data
+	 */
+	if (int_block == NULL) {
+		return RET_FAILURE_NO_MORE_DATA;
+	}
+
 	assert(int_block != NULL);
 
 	int_block->c[zigzag[0]] = coeff_dc.c;
