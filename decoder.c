@@ -251,6 +251,8 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 	size_t seq_no = context->mblocks;
 
 	if (scan->Ns > 1) {
+		assert(context->m_x != 0);
+
 		size_t x = seq_no % context->m_x;
 		size_t y = seq_no / context->m_x;
 
