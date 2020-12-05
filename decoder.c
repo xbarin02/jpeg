@@ -446,6 +446,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 			case 0xffe0:
 			case 0xffe1:
 			case 0xffe2:
+			case 0xffe3:
 			case 0xffe5:
 			case 0xffe6:
 			case 0xffe7:
