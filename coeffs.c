@@ -213,6 +213,7 @@ int read_block(struct bits *bits, struct context *context, uint8_t Cs, struct in
 	 * the int_block to NULL... treat this as if there was no more data
 	 */
 	if (int_block == NULL) {
+		printf("*** corrupted JPEG file ***\n");
 		return RET_FAILURE_NO_MORE_DATA;
 	}
 
