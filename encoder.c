@@ -546,7 +546,7 @@ int write_ecs_dry(struct context *context, struct scan *scan)
 	/* adapt codes */
 	for (int j = 0; j < 2; ++j) {
 		for (int i = 0; i < (context->Nf > 1 ? 2 : 1); ++i) {
-			printf("Adapting Huffman code [%s][%i]...\n", Tc_to_str[j], i);
+			printf("Adapting Huffman table [%s][%i]...\n", Tc_to_str[j], i);
 
 			err = adapt_huffman_table(&context->htable[j][i], &context->huffenc[j][i]);
 			RETURN_IF(err);
