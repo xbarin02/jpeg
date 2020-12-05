@@ -594,6 +594,18 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 				err = parse_comment(stream, len);
 				RETURN_IF(err);
 				break;
+			/* TEM* For temporary private use in arithmetic coding */
+			case 0xff01:
+				printf("TEM\n");
+				break;
+			/* DAC Define arithmetic coding conditioning(s) */
+			case 0xffcc:
+				printf("DAC\n");
+				err = read_length(stream, &len);
+				RETURN_IF(err);
+				err = skip_segment(stream, len);
+				RETURN_IF(err);
+				break;
 			default:
 				fprintf(stderr, "unhandled marker 0x%" PRIx16 "\n", marker);
 				return RET_FAILURE_FILE_UNSUPPORTED;
