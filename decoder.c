@@ -431,6 +431,9 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 
 	struct scan scan;
 
+	// init
+	scan.Ns = 0;
+
 	while (1) {
 		uint16_t marker;
 
