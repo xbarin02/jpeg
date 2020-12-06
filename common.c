@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 #include "common.h"
 #include "mjpeg.h"
 #include "huffman.h"
@@ -119,6 +120,8 @@ int alloc_buffers(struct component *component, size_t size)
 	if (component->int_buffer == NULL) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
+
+	memset(component->int_buffer, 0, sizeof(struct int_block) * size);
 
 	component->flt_buffer = malloc(sizeof(struct flt_block) * size);
 
