@@ -115,6 +115,9 @@ size_t ceil_div(size_t n, size_t d)
 
 int alloc_buffers(struct component *component, size_t size)
 {
+	// do not redefine component (multiple definitions inside SOF marker)
+	assert(component->int_buffer == NULL);
+
 	component->int_buffer = malloc(sizeof(struct int_block) * size);
 
 	if (component->int_buffer == NULL) {
