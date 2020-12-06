@@ -99,7 +99,7 @@ int read_image(struct context *context, FILE *stream, struct params *params)
 	err = read_frame_header(&frame, stream);
 	RETURN_IF(err);
 
-	printf("[DEBUG] header Nf=%" PRIu8 " Y=%" PRIu16 " X=%" PRIu16 " P=%" PRIu8 "\n", frame.components, frame.Y, frame.X, frame.precision);
+	printf("read PPM/PGM header: Nf=%" PRIu8 " Y=%" PRIu16 " X=%" PRIu16 " P=%" PRIu8 "\n", frame.components, frame.Y, frame.X, frame.precision);
 
 	context->Nf = frame.components;
 	context->Y = frame.Y;
@@ -157,8 +157,6 @@ int read_image(struct context *context, FILE *stream, struct params *params)
 	// load frame body
 	err = read_frame_body(&frame, stream);
 	RETURN_IF(err);
-
-	printf("[DEBUG] frame data loaded\n");
 
 	err = compute_no_blocks_and_alloc_buffers(context);
 	RETURN_IF(err);
@@ -583,7 +581,7 @@ int write_ecs(FILE *stream, struct context *context, struct scan *scan)
 
 	flush_bits(&bits);
 
-	printf("*** %zu macroblocks ***\n", context->mblocks);
+	printf("Processed: %zu macroblocks\n", context->mblocks);
 
 	return RET_SUCCESS;
 }

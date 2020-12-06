@@ -354,7 +354,7 @@ int read_ecs(FILE *stream, struct context *context, struct scan *scan)
 	} while (1);
 
 end:
-	printf("*** %zu macroblocks ***\n", context->mblocks);
+	printf("Processed: %zu macroblocks\n", context->mblocks);
 
 	return RET_SUCCESS;
 }

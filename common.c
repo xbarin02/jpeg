@@ -163,7 +163,7 @@ int compute_no_blocks_and_alloc_buffers(struct context *context)
 	context->m_x = ceil_div(X, 8 * max_H);
 	context->m_y = ceil_div(Y, 8 * max_V);
 
-	printf("[DEBUG] expecting %zu macroblocks\n", context->m_x * context->m_y);
+	printf("Expecting %zu macroblocks\n", context->m_x * context->m_y);
 
 	for (int i = 0; i < 256; ++i) {
 		uint8_t H, V;
@@ -176,7 +176,7 @@ int compute_no_blocks_and_alloc_buffers(struct context *context)
 			context->component[i].b_x = b_x;
 			context->component[i].b_y = b_y;
 
-			printf("[DEBUG] C = %i: %zu blocks (x=%zu y=%zu)\n", i, b_x * b_y, b_x, b_y);
+			printf("C = %i: %zu blocks (x=%zu y=%zu)\n", i, b_x * b_y, b_x, b_y);
 
 			err = alloc_buffers(&context->component[i], b_x * b_y);
 			RETURN_IF(err);

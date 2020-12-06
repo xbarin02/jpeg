@@ -73,8 +73,6 @@ int generate_size_table(struct htable *htable, struct hcode *hcode)
 #undef HUFFSIZE
 #undef LASTK
 
-// 	printf("[DEBUG] last_k = %zu\n", hcode->last_k);
-
 	return RET_SUCCESS;
 }
 

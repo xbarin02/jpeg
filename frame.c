@@ -24,8 +24,6 @@ int frame_create_empty(struct context *context, struct frame *frame)
 	frame->size_x = size_x;
 	frame->size_y = size_y;
 
-	printf("[DEBUG] frame Nf=%i X=%zu Y=%zu\n", (int)frame->components, size_x, size_y);
-
 	// alloc frame->data[]
 	frame->data = malloc(sizeof(float) * frame->components * size_x * size_y);
 
