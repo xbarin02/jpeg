@@ -250,7 +250,40 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 
 	size_t seq_no = context->mblocks;
 
-	if (scan->Ns > 1) {
+	if (scan->Ns == 0) {
+		/* nothing to do */
+		return RET_FAILURE_NO_MORE_DATA;
+	} else if (scan->Ns == 1) {
+		/* A.2.2 Non-interleaved order (Ns = 1) */
+		assert(scan->Ns == 1);
+
+		uint8_t Cs = scan->Cs[0];
+
+		uint8_t H = context->component[Cs].H;
+		uint8_t V = context->component[Cs].V;
+
+		size_t blocks_in_mb = H * V;
+
+		for (size_t w = 0; w < blocks_in_mb; ++w) {
+			size_t block_x = (blocks_in_mb * seq_no + w) % context->component[Cs].b_x;
+			size_t block_y = (blocks_in_mb * seq_no + w) / context->component[Cs].b_x;
+
+			size_t block_seq = block_y * context->component[Cs].b_x + block_x;
+
+			struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
+
+			/* read block */
+			err = read_block(bits, context, Cs, int_block);
+			RETURN_IF(err);
+
+			if (scan->last_block[Cs] != NULL) {
+				int_block->c[0] += scan->last_block[Cs]->c[0];
+			}
+
+			scan->last_block[Cs] = int_block;
+		}
+	} else {
+		assert(scan->Ns > 1);
 		assert(context->m_x != 0);
 
 		size_t x = seq_no % context->m_x;
@@ -298,35 +331,6 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 					scan->last_block[Cs] = int_block;
 				}
 			}
-		}
-	} else {
-		/* A.2.2 Non-interleaved order (Ns = 1) */
-		assert(scan->Ns == 1);
-
-		uint8_t Cs = scan->Cs[0];
-
-		uint8_t H = context->component[Cs].H;
-		uint8_t V = context->component[Cs].V;
-
-		size_t blocks_in_mb = H * V;
-
-		for (size_t w = 0; w < blocks_in_mb; ++w) {
-			size_t block_x = (blocks_in_mb * seq_no + w) % context->component[Cs].b_x;
-			size_t block_y = (blocks_in_mb * seq_no + w) / context->component[Cs].b_x;
-
-			size_t block_seq = block_y * context->component[Cs].b_x + block_x;
-
-			struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
-
-			/* read block */
-			err = read_block(bits, context, Cs, int_block);
-			RETURN_IF(err);
-
-			if (scan->last_block[Cs] != NULL) {
-				int_block->c[0] += scan->last_block[Cs]->c[0];
-			}
-
-			scan->last_block[Cs] = int_block;
 		}
 	}
 
