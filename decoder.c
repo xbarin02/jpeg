@@ -589,6 +589,7 @@ int parse_format(FILE *stream, struct context *context, const char *path)
 			case 0xffd5:
 			case 0xffd6:
 			case 0xffd7:
+				printf("RST%i\n", marker & 0xf);
 				err = read_ecs(stream, context, &scan);
 				RETURN_IF(err);
 				break;
