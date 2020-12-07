@@ -79,10 +79,10 @@ void init_params(struct params *params)
 {
 	assert(params != NULL);
 
-	params->H = 1;
+	params->H = 2;
 	params->V = 1;
 
-	params->q = 50;
+	params->q = 75;
 
 	params->optimize = 1;
 }
