@@ -521,6 +521,30 @@ int read_frame_header(struct frame *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
+int write_frame_components(struct frame *frame, int components, const char *path)
+{
+	int err;
+
+	FILE *stream = fopen(path, "w");
+
+	if (stream == NULL) {
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	err = write_frame_header(frame, components, stream);
+
+	if (err) {
+		goto end;
+	}
+
+	err = write_frame_body(frame, components, stream);
+
+end:
+	fclose(stream);
+
+	return err;
+}
+
 int write_frame(struct frame *frame, const char *path)
 {
 	assert(frame != NULL);
@@ -528,43 +552,16 @@ int write_frame(struct frame *frame, const char *path)
 	int err;
 
 	switch (frame->components) {
-		FILE *stream;
 		case 4:
-			stream = fopen(path != NULL ? path : "output.ppm", "w");
-			if (stream == NULL) {
-				return RET_FAILURE_FILE_OPEN;
-			}
-			err = write_frame_header(frame, 3, stream);
-			RETURN_IF(err);
-			err = write_frame_body(frame, 3, stream);
-			RETURN_IF(err);
-			fclose(stream);
-			break;
 		case 3:
-			stream = fopen(path != NULL ? path : "output.ppm", "w");
-			if (stream == NULL) {
-				return RET_FAILURE_FILE_OPEN;
-			}
-			err = write_frame_header(frame, 3, stream);
-			RETURN_IF(err);
-			err = write_frame_body(frame, 3, stream);
-			RETURN_IF(err);
-			fclose(stream);
+			err = write_frame_components(frame, 3, path != NULL ? path : "output.ppm");
 			break;
 		case 1:
-			stream = fopen(path != NULL ? path : "output.pgm", "w");
-			if (stream == NULL) {
-				return RET_FAILURE_FILE_OPEN;
-			}
-			err = write_frame_header(frame, 1, stream);
-			RETURN_IF(err);
-			err = write_frame_body(frame, 1, stream);
-			RETURN_IF(err);
-			fclose(stream);
+			err = write_frame_components(frame, 1, path != NULL ? path : "output.pgm");
 			break;
 		default:
 			abort();
 	}
 
-	return RET_SUCCESS;
+	return err;
 }
