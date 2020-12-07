@@ -392,6 +392,10 @@ int parse_restart_interval(FILE *stream, struct context *context)
 
 int parse_comment(FILE *stream, uint16_t len)
 {
+	if (len < 2) {
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
 	assert(len >= 2);
 
 	size_t l = len - 2;
@@ -688,6 +692,7 @@ int main(int argc, char *argv[])
 	int err = process_jpeg_file(i_path, o_path);
 
 	if (err) {
+		printf("Failure.\n");
 		return 1;
 	}
 
