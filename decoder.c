@@ -28,6 +28,11 @@ int parse_qtable(FILE *stream, struct context *context)
 	err = read_nibbles(stream, &Pq, &Tq);
 	RETURN_IF(err);
 
+	if (Tq >= 4) {
+		/* invalid value */
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
 	assert(Tq < 4);
 	assert(Pq < 2);
 
@@ -228,9 +233,18 @@ int parse_scan_header(FILE *stream, struct context *context, struct scan *scan)
 	err = read_nibbles(stream, &Ah, &Al);
 	RETURN_IF(err);
 
+	if (Ss != 0 || Se != 63) {
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
 	assert(Ss == 0);
 	assert(Se == 63);
 	printf("Ss = %" PRIu8 " (the first DCT coefficient), Se = %" PRIu8 " (the last DCT coefficient)\n", Ss, Se);
+
+	if (Ah != 0 || Al != 0) {
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
 	assert(Ah == 0);
 	assert(Al == 0);
 	printf("Ah = %" PRIu8 " (bit position high), Al = %" PRIu8 " (bit position low)\n", Ah, Al);
