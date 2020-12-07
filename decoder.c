@@ -302,6 +302,12 @@ int read_macroblock(struct bits *bits, struct context *context, struct scan *sca
 		}
 	} else {
 		assert(scan->Ns > 1);
+
+		if (context->m_x == 0) {
+			/* missing SOF before SOS? */
+			return RET_FAILURE_FILE_UNSUPPORTED;
+		}
+
 		assert(context->m_x != 0);
 
 		size_t x = seq_no % context->m_x;
