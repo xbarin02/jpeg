@@ -389,6 +389,7 @@ int write_frame_body(struct frame *frame, int components, FILE *stream)
 				break;
 			}
 			default:
+				free(line);
 				return RET_FAILURE_LOGIC_ERROR;
 		}
 		/* write line */
