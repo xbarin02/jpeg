@@ -428,13 +428,19 @@ int write_image(struct context *context, const char *path)
 
 	err = frame_create(context, &frame);
 	RETURN_IF(err);
+
 	err = frame_to_rgb(&frame);
-	RETURN_IF(err);
+
+	if (err) {
+		goto end;
+	}
+
 	err = write_frame(&frame, path);
-	RETURN_IF(err);
+
+end:
 	frame_destroy(&frame);
 
-	return RET_SUCCESS;
+	return err;
 }
 
 int epilogue(struct context *context, const char *path)
