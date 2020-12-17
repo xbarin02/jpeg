@@ -530,16 +530,16 @@ int write_macroblock_dry(struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
-size_t coord_to_block(size_t n)
+size_t coord_to_block(size_t n, uint8_t m)
 {
-	return n / 8;
+	return n / 8 / m;
 }
 
-int roi_p(size_t block_x, size_t block_y, struct roi *roi)
+int roi_p(size_t block_x, size_t block_y, struct roi *roi, uint8_t h, uint8_t v)
 {
 	assert(roi != NULL);
 
-	return block_x >= coord_to_block(roi->x0) && block_x <= coord_to_block(roi->x1 - 1) && block_y >= coord_to_block(roi->y0) && block_y <= coord_to_block(roi->y1 - 1);
+	return block_x >= coord_to_block(roi->x0, h) && block_x <= coord_to_block(roi->x1 - 1, h) && block_y >= coord_to_block(roi->y0, v) && block_y <= coord_to_block(roi->y1 - 1, v);
 }
 
 int threshold_macroblock(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi)
@@ -551,6 +551,9 @@ int threshold_macroblock(struct context *context, struct scan *scan, int32_t thr
 
 	size_t x = seq_no % context->m_x;
 	size_t y = seq_no / context->m_x;
+
+	uint8_t max_H = context->max_H;
+	uint8_t max_V = context->max_V;
 
 	/* for each component */
 	for (int j = 0; j < scan->Ns; ++j) {
@@ -579,8 +582,11 @@ int threshold_macroblock(struct context *context, struct scan *scan, int32_t thr
 
 				int32_t thr = 0;
 
-				if (j == 0 && !roi_p(block_x, block_y, roi)) {
+				if (j == 0 && !roi_p(block_x, block_y, roi, max_H / H, max_V / V)) {
 					thr = threshold;
+				}
+				if (j != 0 && !roi_p(block_x, block_y, roi, max_H / H, max_V / V)) {
+					thr = threshold / 8;
 				}
 
 				threshold_block(int_block, thr);
