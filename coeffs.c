@@ -372,7 +372,7 @@ void threshold_block(struct int_block *int_block, int32_t thr)
 	assert(int_block != NULL);
 
 	for (int i = 1; i < 64; ++i) {
-		if (abs_i32(int_block->c[zigzag[i]]) < thr) {
+		if (abs_i32(int_block->c[zigzag[i]]) <= thr) {
 			int_block->c[zigzag[i]] = 0;
 		}
 	}
