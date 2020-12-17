@@ -21,4 +21,6 @@ int write_block(struct bits *bits, struct context *context, uint8_t Cs, struct i
 
 int write_block_dry(struct context *context, uint8_t Cs, struct int_block *int_block);
 
+void threshold_block(struct int_block *int_block, int32_t thr);
+
 #endif

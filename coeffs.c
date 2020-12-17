@@ -361,3 +361,19 @@ int write_block_dry(struct context *context, uint8_t Cs, struct int_block *int_b
 
 	return RET_SUCCESS;
 }
+
+int32_t abs_i32(int32_t n)
+{
+	return n < 0 ? -n : +n;
+}
+
+void threshold_block(struct int_block *int_block, int32_t thr)
+{
+	assert(int_block != NULL);
+
+	for (int i = 1; i < 64; ++i) {
+		if (abs_i32(int_block->c[zigzag[i]]) < thr) {
+			int_block->c[zigzag[i]] = 0;
+		}
+	}
+}

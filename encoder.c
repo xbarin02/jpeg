@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <assert.h>
 #include <unistd.h>
+#include <string.h>
 #include "common.h"
 #include "frame.h"
 #include "coeffs.h"
@@ -64,6 +65,10 @@ void set_qtable(struct qtable *qtable, const unsigned int Q_ref[64], int q)
 	}
 }
 
+struct roi {
+	size_t x0, y0, x1, y1;
+};
+
 /* command line parameters */
 struct params {
 	/* luma subsampling */
@@ -73,6 +78,10 @@ struct params {
 	int q;
 
 	int optimize;
+
+	int32_t threshold;
+
+	struct roi roi;
 };
 
 void init_params(struct params *params)
@@ -85,6 +94,10 @@ void init_params(struct params *params)
 	params->q = 75;
 
 	params->optimize = 1;
+
+	params->threshold = 0;
+
+	params->roi = (struct roi){ 0, 0, 1, 1 };
 }
 
 int read_image(struct context *context, FILE *stream, struct params *params)
@@ -517,6 +530,74 @@ int write_macroblock_dry(struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
+size_t coord_to_block(size_t n)
+{
+	return n / 8;
+}
+
+int roi_p(size_t block_x, size_t block_y, struct roi *roi)
+{
+	assert(roi != NULL);
+
+	return block_x >= coord_to_block(roi->x0) && block_x <= coord_to_block(roi->x1 - 1) && block_y >= coord_to_block(roi->y0) && block_y <= coord_to_block(roi->y1 - 1);
+}
+
+int threshold_macroblock(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi)
+{
+	assert(scan != NULL);
+	assert(context != NULL);
+
+	size_t seq_no = context->mblocks;
+
+	size_t x = seq_no % context->m_x;
+	size_t y = seq_no / context->m_x;
+
+	/* for each component */
+	for (int j = 0; j < scan->Ns; ++j) {
+		uint8_t Cs = scan->Cs[j];
+		uint8_t H = context->component[Cs].H;
+		uint8_t V = context->component[Cs].V;
+
+		/* for each 8x8 block */
+		for (int v = 0; v < V; ++v) {
+			for (int h = 0; h < H; ++h) {
+				size_t block_x = x * H + h;
+				size_t block_y = y * V + v;
+
+				assert(block_x < context->component[Cs].b_x);
+
+				size_t block_seq = block_y * context->component[Cs].b_x + block_x;
+
+				struct int_block *int_block = &context->component[Cs].int_buffer[block_seq];
+
+				/* differential DC coding */
+				if (scan->last_block[Cs] != NULL) {
+					int_block->c[0] -= scan->last_block[Cs]->c[0];
+				}
+
+				assert(int_block->c[0] >= -2047 && int_block->c[0] <= +2047);
+
+				int32_t thr = 0;
+
+				if (j == 0 && !roi_p(block_x, block_y, roi)) {
+					thr = threshold;
+				}
+
+				threshold_block(int_block, thr);
+
+				// revert back
+				if (scan->last_block[Cs] != NULL) {
+					int_block->c[0] += scan->last_block[Cs]->c[0];
+				}
+
+				scan->last_block[Cs] = int_block;
+			}
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
 const char *Tc_to_str[] = {
 	[0] = "DC",
 	[1] = "AC"
@@ -552,6 +633,28 @@ int write_ecs_dry(struct context *context, struct scan *scan)
 			int err = conv_htable_to_hcode(&context->htable[j][i], &context->hcode[j][i]);
 			RETURN_IF(err);
 		}
+	}
+
+	return RET_SUCCESS;
+}
+
+int threshold_ecs(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi)
+{
+	int err;
+
+	size_t mblocks_total = context->m_x * context->m_y;
+
+	/* reset the counter */
+	context->mblocks = 0;
+
+	for (int i = 0; i < 256; ++i) {
+		scan->last_block[i] = NULL;
+	}
+
+	/* loop over macroblocks (dry run) */
+	for (; context->mblocks < mblocks_total; context->mblocks++) {
+		err = threshold_macroblock(context, scan, threshold, roi);
+		RETURN_IF(err);
 	}
 
 	return RET_SUCCESS;
@@ -610,6 +713,11 @@ int produce_codestream(struct context *context, FILE *stream, struct params *par
 
 	err = fill_scan(context, &scan);
 	RETURN_IF(err);
+
+	if (params->threshold > 0) {
+		err = threshold_ecs(context, &scan, params->threshold, &params->roi);
+		RETURN_IF(err);
+	}
 
 	// enable this by command line option
 	if (params->optimize) {
@@ -674,8 +782,9 @@ int main(int argc, char *argv[])
 
 	int opt;
 
-	while ((opt = getopt(argc, argv, "h:v:q:o:")) != -1) {
+	while ((opt = getopt(argc, argv, "h:v:q:o:t:r:")) != -1) {
 		switch (opt) {
+			char *ptr;
 			case 'h':
 				params.H = atoi(optarg);
 				break;
@@ -688,8 +797,37 @@ int main(int argc, char *argv[])
 			case 'o':
 				params.optimize = atoi(optarg);
 				break;
+			case 't':
+				params.threshold = atoi(optarg);
+				break;
+			case 'r':
+				ptr = strtok(optarg, ",");
+				if (ptr == NULL) {
+					goto usage;
+				}
+				params.roi.x0 = atoi(ptr);
+
+				ptr = strtok(NULL, ",");
+				if (ptr == NULL) {
+					goto usage;
+				}
+				params.roi.y0 = atoi(ptr);
+
+				ptr = strtok(NULL, ",");
+				if (ptr == NULL) {
+					goto usage;
+				}
+				params.roi.x1 = atoi(ptr);
+
+				ptr = strtok(NULL, ",");
+				if (ptr == NULL) {
+					goto usage;
+				}
+				params.roi.y1 = atoi(ptr);
+				break;
+			usage:
 			default:
-				fprintf(stderr, "Usage: %s [-h factor] [-v factor] [-q quality] [-o value] input.{ppm|pgm} output.jpg\n",
+				fprintf(stderr, "Usage: %s [-h factor] [-v factor] [-q quality] [-o value] [-t threshold] [-r x0,y0,x1,y1] input.{ppm|pgm} output.jpg\n",
 					argv[0]);
 				return 1;
 		}
