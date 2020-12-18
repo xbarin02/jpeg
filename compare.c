@@ -70,6 +70,78 @@ int compare_frames(struct frame *i_frame, struct frame *j_frame)
 
 	printf("PSNR = %f\n", psnr);
 
+	// block size
+	size_t B = 8;
+
+	assert(X % B == 0 && Y % B == 0);
+
+	float D_B = 0.f; // Eq. (19)
+	size_t N_B = 0;
+
+	float D_CB = 0.f; // Eq. (20)
+	size_t N_CB = 0;
+
+	for (size_t c = 0; c < Nf; ++c) {
+		// for each block except the last one
+		for (size_t b_y = 0; b_y < Y / B - 1; ++b_y) {
+			for (size_t b_x = 0; b_x < X / B - 1; ++b_x) {
+#define P(y,x) (j_frame->data[(y) * j_frame->size_x * Nf + (x) * Nf + c])
+				// horizontal
+				for (size_t yy = 0; yy < 8; ++yy) {
+					float e = P(8 * b_y + yy, 8 * b_x + 7) - P(8 * b_y + yy, 8 * b_x + 8);
+					D_B += e * e;
+					N_B++;
+				}
+				// vertical
+				for (size_t xx = 0; xx < 8; ++xx) {
+					float e = P(8 * b_y + 7, 8 * b_x + xx) - P(8 * b_y + 8, 8 * b_x + xx);
+					D_B += e * e;
+					N_B++;
+				}
+
+				// horizontal
+				for (size_t yy = 0; yy < 8; ++yy) {
+					for (size_t xx = 0; xx < 7; ++xx) {
+						float e = P(8 * b_y + yy, 8 * b_x + xx) - P(8 * b_y + yy, 8 * b_x + xx + 1);
+						D_CB += e * e;
+						N_CB++;
+					}
+				}
+				// vertical
+				for (size_t yy = 0; yy < 7; ++yy) {
+					for (size_t xx = 0; xx < 8; ++xx) {
+						float e = P(8 * b_y + yy, 8 * b_x + xx) - P(8 * b_y + yy + 1, 8 * b_x + xx);
+						D_CB += e * e;
+						N_CB++;
+					}
+				}
+#undef P
+			}
+		}
+	}
+
+	D_B /= N_B;
+	D_CB /= N_CB;
+
+	float eta = 0.f;
+	if (D_B > D_CB) {
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+		eta = 3.f / log2f(MIN(X, Y));
+#undef MIN
+	}
+
+	float BEF = eta * (D_B - D_CB);
+
+	printf("BEF = %f\n", BEF);
+
+	float mse_b = mse + BEF;
+
+	printf("MSE-B = %f\n", mse_b);
+
+	float psnr_b = 10 * log10f(maxval * maxval / mse_b);
+
+	printf("PSNR-B = %f\n", psnr_b);
+
 	return RET_SUCCESS;
 }
 
