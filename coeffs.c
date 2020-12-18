@@ -394,3 +394,21 @@ void cutoff_block(struct int_block *int_block, int cut)
 		int_block->c[zigzag[i]] = 0;
 	}
 }
+
+void threshold_dequantized_block(struct int_block *int_block, int32_t thr, struct qtable *qtable)
+{
+	assert(int_block != NULL);
+	assert(qtable != NULL);
+
+	if (thr <= 0) {
+		return;
+	}
+
+	for (int i = 1; i < 64; ++i) {
+		int32_t c = int_block->c[zigzag[i]] * qtable->Q[zigzag[i]];
+
+		if (abs_i32(c) <= thr) {
+			int_block->c[zigzag[i]] = 0;
+		}
+	}
+}

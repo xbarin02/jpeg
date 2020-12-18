@@ -25,4 +25,6 @@ void threshold_block(struct int_block *int_block, int32_t thr);
 
 void cutoff_block(struct int_block *int_block, int cut);
 
+void threshold_dequantized_block(struct int_block *int_block, int32_t thr, struct qtable *qtable);
+
 #endif
