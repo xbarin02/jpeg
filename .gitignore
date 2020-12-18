@@ -1,5 +1,6 @@
 decoder
 encoder
+compare
 *.jpg
 *.jpeg
 *.JPG
