@@ -546,7 +546,7 @@ int roi_p(size_t block_x, size_t block_y, struct roi *roi, uint8_t h, uint8_t v)
 	return block_x >= coord_to_block(roi->x0, h) && block_x <= coord_to_block(roi->x1 - 1, h) && block_y >= coord_to_block(roi->y0, v) && block_y <= coord_to_block(roi->y1 - 1, v);
 }
 
-int threshold_macroblock(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi, int cutoff)
+int threshold_macroblock(struct context *context, struct scan *scan, struct roi *roi, int32_t threshold, int cutoff)
 {
 	assert(scan != NULL);
 	assert(context != NULL);
@@ -652,7 +652,7 @@ int write_ecs_dry(struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
-int threshold_ecs(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi, int cutoff)
+int threshold_ecs(struct context *context, struct scan *scan, struct roi *roi, int32_t threshold, int cutoff)
 {
 	int err;
 
@@ -667,7 +667,7 @@ int threshold_ecs(struct context *context, struct scan *scan, int32_t threshold,
 
 	/* loop over macroblocks (dry run) */
 	for (; context->mblocks < mblocks_total; context->mblocks++) {
-		err = threshold_macroblock(context, scan, threshold, roi, cutoff);
+		err = threshold_macroblock(context, scan, roi, threshold, cutoff);
 		RETURN_IF(err);
 	}
 
@@ -729,8 +729,8 @@ int produce_codestream(struct context *context, FILE *stream, struct params *par
 	RETURN_IF(err);
 
 	if (params->threshold > 0 || params->cutoff > 0) {
-		printf("Thresholding background coefficients...\n");
-		err = threshold_ecs(context, &scan, params->threshold, &params->roi, params->cutoff);
+		printf("Throwing away background coefficients...\n");
+		err = threshold_ecs(context, &scan, &params->roi, params->threshold, params->cutoff);
 		RETURN_IF(err);
 	}
 
