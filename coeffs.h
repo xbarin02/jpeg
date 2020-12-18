@@ -23,4 +23,6 @@ int write_block_dry(struct context *context, uint8_t Cs, struct int_block *int_b
 
 void threshold_block(struct int_block *int_block, int32_t thr);
 
+void cutoff_block(struct int_block *int_block, int lim);
+
 #endif

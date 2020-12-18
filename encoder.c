@@ -82,6 +82,8 @@ struct params {
 	int32_t threshold;
 
 	struct roi roi;
+
+	int cutoff;
 };
 
 void init_params(struct params *params)
@@ -98,6 +100,8 @@ void init_params(struct params *params)
 	params->threshold = 0;
 
 	params->roi = (struct roi){ 0, 0, 1, 1 };
+
+	params->cutoff = 0;
 }
 
 int read_image(struct context *context, FILE *stream, struct params *params)
@@ -542,7 +546,7 @@ int roi_p(size_t block_x, size_t block_y, struct roi *roi, uint8_t h, uint8_t v)
 	return block_x >= coord_to_block(roi->x0, h) && block_x <= coord_to_block(roi->x1 - 1, h) && block_y >= coord_to_block(roi->y0, v) && block_y <= coord_to_block(roi->y1 - 1, v);
 }
 
-int threshold_macroblock(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi)
+int threshold_macroblock(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi, int cutoff)
 {
 	assert(scan != NULL);
 	assert(context != NULL);
@@ -580,16 +584,20 @@ int threshold_macroblock(struct context *context, struct scan *scan, int32_t thr
 
 				assert(int_block->c[0] >= -2047 && int_block->c[0] <= +2047);
 
-				int32_t thr = 0;
+				if (!roi_p(block_x, block_y, roi, max_H / H, max_V / V)) {
+					int32_t thr = 0;
 
-				if (j == 0 && !roi_p(block_x, block_y, roi, max_H / H, max_V / V)) {
-					thr = threshold;
-				}
-				if (j != 0 && !roi_p(block_x, block_y, roi, max_H / H, max_V / V)) {
-					thr = threshold / 8;
-				}
+					if (j == 0) {
+						thr = threshold;
+					}
+					if (j != 0) {
+						thr = threshold / 8;
+					}
 
-				threshold_block(int_block, thr);
+					threshold_block(int_block, thr);
+
+					cutoff_block(int_block, cutoff);
+				}
 
 				// revert back
 				if (scan->last_block[Cs] != NULL) {
@@ -644,7 +652,7 @@ int write_ecs_dry(struct context *context, struct scan *scan)
 	return RET_SUCCESS;
 }
 
-int threshold_ecs(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi)
+int threshold_ecs(struct context *context, struct scan *scan, int32_t threshold, struct roi *roi, int cutoff)
 {
 	int err;
 
@@ -659,7 +667,7 @@ int threshold_ecs(struct context *context, struct scan *scan, int32_t threshold,
 
 	/* loop over macroblocks (dry run) */
 	for (; context->mblocks < mblocks_total; context->mblocks++) {
-		err = threshold_macroblock(context, scan, threshold, roi);
+		err = threshold_macroblock(context, scan, threshold, roi, cutoff);
 		RETURN_IF(err);
 	}
 
@@ -720,8 +728,9 @@ int produce_codestream(struct context *context, FILE *stream, struct params *par
 	err = fill_scan(context, &scan);
 	RETURN_IF(err);
 
-	if (params->threshold > 0) {
-		err = threshold_ecs(context, &scan, params->threshold, &params->roi);
+	if (params->threshold > 0 || params->cutoff > 0) {
+		printf("Thresholding background coefficients...\n");
+		err = threshold_ecs(context, &scan, params->threshold, &params->roi, params->cutoff);
 		RETURN_IF(err);
 	}
 
@@ -788,7 +797,7 @@ int main(int argc, char *argv[])
 
 	int opt;
 
-	while ((opt = getopt(argc, argv, "h:v:q:o:t:r:")) != -1) {
+	while ((opt = getopt(argc, argv, "h:v:q:o:t:r:c:")) != -1) {
 		switch (opt) {
 			char *ptr;
 			case 'h':
@@ -831,9 +840,12 @@ int main(int argc, char *argv[])
 				}
 				params.roi.y1 = atoi(ptr);
 				break;
+			case 'c':
+				params.cutoff = atoi(optarg);
+				break;
 			usage:
 			default:
-				fprintf(stderr, "Usage: %s [-h factor] [-v factor] [-q quality] [-o value] [-t threshold] [-r x0,y0,x1,y1] input.{ppm|pgm} output.jpg\n",
+				fprintf(stderr, "Usage: %s [-h factor] [-v factor] [-q quality] [-o value] [-t threshold] [-c cut-off-coefficient] [-r x0,y0,x1,y1] input.{ppm|pgm} output.jpg\n",
 					argv[0]);
 				return 1;
 		}
