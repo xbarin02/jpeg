@@ -371,7 +371,7 @@ void threshold_block(struct int_block *int_block, int32_t thr)
 {
 	assert(int_block != NULL);
 
-	if (thr == 0) {
+	if (thr <= 0) {
 		return;
 	}
 
@@ -382,19 +382,15 @@ void threshold_block(struct int_block *int_block, int32_t thr)
 	}
 }
 
-void cutoff_block(struct int_block *int_block, int lim)
+void cutoff_block(struct int_block *int_block, int cut)
 {
 	assert(int_block != NULL);
 
-	if (lim == 0) {
+	if (cut <= 0) {
 		return;
 	}
 
-	if (lim < 1) {
-		lim = 1;
-	}
-
-	for (int i = lim; i < 64; ++i) {
+	for (int i = cut; i < 64; ++i) {
 		int_block->c[zigzag[i]] = 0;
 	}
 }
